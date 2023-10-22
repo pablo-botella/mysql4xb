@@ -1,0 +1,14 @@
+//------------------------------------------------------------
+//  Project: libmysql.dll wrapper for Xbase++                -
+//  Repository : http://www.xbwin.com                        -
+//  Author: Pablo Botella Navarro ( http://www.xbwin.com )   -
+//------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// mysql4xb.cpp
+// ---------------------------------------------------------------------------
+_XPP_REG_FUN_( MYSQL4XB )
+_XPP_REG_FUN_( MYSQL4XB_RESULTSET_T )
+_XPP_REG_FUN_( MYSQL4XB_RESULT_ROWS_T )
+_XPP_REG_FUN_( MYSQL4XB_RESULT_FIELD_T )
+

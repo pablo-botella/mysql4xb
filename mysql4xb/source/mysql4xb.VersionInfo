@@ -1,0 +1,158 @@
+[mysql4xb.dll]  Version:{1,0,0,0}
+
+{$<File:>$[LICENSE.TXT]$}
+
+Copyright (c) 2023 - {$<LOCALTIME(YYYY)>$} Pablo Botella Navarro
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+{$<File:>$[__mklib.bat]$}
+C:\Alaska\XPPW32\bin\aimplib.exe  mysql4xb.def   /omysql4xb.lib > mysql4xb-lib.log
+type mysql4xb-lib.log
+
+{$<File:>$[mysql4xb_extract_all.bat]$}
+rd mysql4xb_bin /s /q
+md mysql4xb_bin
+rd mysql4xb_source  /s /q
+md mysql4xb_source
+
+7z x _mysql4xb_{$<FILEVERSION(_._._._)>$}.zip  -o.\mysql4xb_bin
+7z x _mysql4xb_{$<FILEVERSION(_._._._)>$}_source.zip  -o.\mysql4xb_source
+
+if exist "c:\util\mysql4xb_autodeploy.bat" ( 
+call "c:\util\mysql4xb_autodeploy.bat"  %~dp0mysql4xb_bin\  
+) else (
+cls                        
+@echo '
+@echo '
+@echo '
+@echo '
+@echo '  - --------------------------------------------------------------------
+@echo '  -   CREATE THE BATCH FILE "c:\util\mysql4xb_autodeploy.bat"             -
+@echo '  -   THAT WILL BE CALLED WITH THE FULL PATH OF mysql4xb_BIN AS PARAMETER -
+@echo '  -   SO YOU CAN CUSTOMIZE THE DEPLOYMENT ACORDING YOUR ENVIRONMENT    -
+@echo '  - --------------------------------------------------------------------
+@echo '
+@echo '
+@echo '
+pause
+)    
+
+
+
+{$<File:>$[__mk_package.bat]$}
+
+echo ---------    %0
+echo %1
+echo %2
+echo ----------------------  
+set "path=c:\util;%path%"
+md %2builds
+md %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}
+
+md %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}
+md %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}\include
+md %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source
+md %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source
+md %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source\ch
+
+copy %2mysql4xb.dll  %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}
+copy %2mysql4xb.lib  %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}
+copy %2mysql4xb_cpp.lib  %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}
+copy %1*.txt %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}
+copy %1ch\*.ch  %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}\include
+
+copy %1mysql4xb_extract_all.bat  %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_deploy.bat
+
+%~d2
+cd %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}
+7za.exe a -y  ..\_mysql4xb_{$<FILEVERSION(_._._._)>$}.zip  *
+%~d1
+cd %~dp1
+
+copy %1..\mysql4xb.sln %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source
+copy %1ch\*.ch  %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source\ch
+copy %1*.rc %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source
+copy %1*.txt %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source
+copy %1*.h %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source
+copy %1*.hpp %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source
+copy %1*.c %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source
+copy %1*.cpp %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source
+copy %1*.def %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source
+copy %1*.xbmac %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source
+copy %1*.versioninfo %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source
+copy %1*.bat %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source
+del %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source\BAT??????????????.bat
+copy %1mysql4xb.vcproj %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source
+%~d2
+cd %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source
+7za.exe a -y  ..\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source.zip   *
+
+%~d1
+cd %~dp1
+
+
+if exist %2builds\SKIP_REMOVE_FILES.TXT goto SKIP_REMOVE_FILES
+del %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}\*.* /q
+del %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}\include\*.* /q
+del %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\*.* /q
+del %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source\*.* /q
+del %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source\ch\*.* /q
+
+rd %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}\include
+rd %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source\ch
+rd %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source\source
+rd %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}_source
+rd %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}\_mysql4xb_{$<FILEVERSION(_._._._)>$}
+rd %2builds\_mysql4xb_{$<FILEVERSION(_._._._)>$}
+:SKIP_REMOVE_FILES
+
+{$<File:>$[mysql4xb_version.h]$}
+#define MYSQL4XB_VERSION_STRING   "{$<FILEVERSION(000.000.000.000)>$}"
+{$<File:>$[mysql4xb.rc]$}
+#include <windows.h>
+
+1 VERSIONINFO
+FILEVERSION {$<FILEVERSION(,,,)>$}
+PRODUCTVERSION {$<FILEVERSION(,,,)>$}
+FILEOS VOS__WINDOWS32
+FILETYPE VFT_DLL
+{
+ BLOCK "StringFileInfo"
+ {
+  BLOCK "040904E4"
+  {
+   VALUE "CompanyName", "Pablo Botella\r\nwww.xbwin.com\r\n\0"
+   VALUE "FileDescription", "libmysql cli wrapper for Xbase++ \000"
+   VALUE "FileVersion", "{$<FILEVERSION(...)>$}\000\000"
+   VALUE "InternalName", "mysql4xb\000"
+   VALUE "LegalCopyright", "Pablo Botella Navarro.\000\000"
+   VALUE "OriginalFilename", "mysql4xb.dll\000"
+  }
+
+ }
+
+ BLOCK "VarFileInfo"
+ {
+  VALUE "Translation", 0x409, 1252
+ }
+}
+
+
+                                     
