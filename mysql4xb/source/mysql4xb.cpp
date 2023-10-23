@@ -95,6 +95,7 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
       pc->Var("m_resultset_class_object");
       pc->Var("m_result_field_class_object");
       pc->Var("m_result_rows_class_object");
+      pc->Var("m_last_connect_result");
 
       // --------------------
       pc->ClassProperty_cbbs("flag_CLIENT_LONG_PASSWORD", "{|| %i }", CLIENT_LONG_PASSWORD);
@@ -141,6 +142,7 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
          ", s:m_resultset_class_object := MYSQL4XB_RESULTSET_T() "
          ", s:m_result_field_class_object := MYSQL4XB_RESULT_FIELD_T()  " 
          ", s:m_result_rows_class_object  := MYSQL4XB_RESULT_ROWS_T()"
+         ", s:m_last_connect_result := NIL  "
          ", s }",
          (DWORD)mysql_init );
       // -------------------
@@ -194,7 +196,8 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
       pc->Method_cbbs("set_option_ssl_mode", "{|s,v| XbFpCall(%i,s:m_mysql,%i,v)}", mysql_xb_set_option_dword, MYSQL_OPT_SSL_MODE);
       pc->Method_cbbs("set_option_get_server_public_key", "{|s,v| XbFpCall(%i,s:m_mysql,%i,v)}", mysql_xb_set_option_bool, MYSQL_OPT_GET_SERVER_PUBLIC_KEY);
       // -----
-      pc->Method_cbbs("connect", "{|s,host,user,pwd,db,port,sk,flags| XbFpCall(%i,s:m_mysql,host,user,pwd,db,port,sk,nOr(flags, s:m_mysql4xb_flags) )}", mysql_xb_real_connect); // ::connect( host,user,pwd,db,port,unix_socket,flags) -> lOk
+      pc->Method_cbbs("connect", "{|s,host,user,pwd,db,port,sk,flags| "
+         " s:m_last_connect_result := XbFpCall(%i,s:m_mysql,host,user,pwd,db,port,sk,nOr(flags, s:m_mysql4xb_flags) )}", mysql_xb_real_connect); // ::connect( host,user,pwd,db,port,unix_socket,flags) -> lOk
       
       pc->Method_cbbs("query", "{|s,sql|  XbFpCall(%i,s:m_mysql,sql" // 1 , 2 
          ",s:m_resultset_class_object" // 3
@@ -202,7 +205,7 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
          ",s:m_result_field_class_object" // 5
          ",s)}", mysql_xb_quick_query); // mysql_xb_quick_query(1pMysql,2sql,3rs_co,4 rows_co , 5 fld_co, 6 self) // ::exec( sql ) -> resulset | NIL
       
-      pc->Method_cbbs("field_count", "{|s| nFpCall( %i , s:m_mysql) }", mysql_field_count);
+      pc->Method_cbbs("field_count", "{|s|   nFpCall( %i , s:m_mysql) }", mysql_field_count);
 
 
       conco = pc->Create();
