@@ -95,12 +95,12 @@ namespace result_rows_ns
       LONG row_count = _conGetNLMember(Self, "row_count");
       DWORD col_count = _conGetNLMember(Self, "col_count");
       DWORD col_pos;
-      BOOL lGhost = (row_count > 0 && row_count <= row_pos) ? FALSE : TRUE;
+      BOOL lGhost = (row_count > 0 && row_pos <= row_count ) ? FALSE : TRUE;
       ContainerHandle con_value = NULLCONTAINER;
       con_field_object = _get_field_object(Self, xpp[2]->con(), col_count, col_pos, con_field_object);
 
-      xpp[3]->PutLong(con_field_object ? 0 : 1);
-      xpp[4]->PutLong(lGhost);
+      xpp[3]->PutBool(con_field_object ? 0 : 1);
+      xpp[4]->PutBool(lGhost);
       if (con_field_object)
       {
          con_value = _conNew(NULLCONTAINER);

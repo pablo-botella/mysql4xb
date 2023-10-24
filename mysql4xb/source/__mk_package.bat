@@ -41,6 +41,7 @@ copy %1*.versioninfo %2builds\_mysql4xb_001_000_000_000\_mysql4xb_001_000_000_00
 copy %1*.bat %2builds\_mysql4xb_001_000_000_000\_mysql4xb_001_000_000_000_source\source
 del %2builds\_mysql4xb_001_000_000_000\_mysql4xb_001_000_000_000_source\source\BAT??????????????.bat
 copy %1mysql4xb.vcproj %2builds\_mysql4xb_001_000_000_000\_mysql4xb_001_000_000_000_source\source
+copy %1mysql4xb.vcxproj %2builds\_mysql4xb_001_000_000_000\_mysql4xb_001_000_000_000_source\source
 %~d2
 cd %2builds\_mysql4xb_001_000_000_000\_mysql4xb_001_000_000_000_source
 7za.exe a -y  ..\_mysql4xb_001_000_000_000_source.zip   *
