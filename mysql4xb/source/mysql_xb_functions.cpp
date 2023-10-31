@@ -8,7 +8,7 @@ void __cdecl mysql_xb_set_option_dword(XppParamList pl) // ( MYSQL* pMysql , nOp
    {
       DWORD value = xpp[3]->GetDWord();
 
-      mysql_options(my, (mysql_option) xpp[2]->GetLong(), (void*) value);
+      mysql_options(my, (mysql_option) xpp[2]->GetLong(), (void*) &value);
    }
 }
 // ------------------------------------------------------------------------------------------------------------
@@ -20,7 +20,7 @@ void __cdecl mysql_xb_set_option_bool(XppParamList pl) // ( MYSQL* pMysql , nOpt
    {
       int value = (xpp[3]->GetBool() ? 1 : 0);
 
-      mysql_options(my, (mysql_option)xpp[2]->GetLong(), (void*) value);
+      mysql_options(my, (mysql_option)xpp[2]->GetLong(), (void*) &value);
    }
 }
 // ------------------------------------------------------------------------------------------------------------

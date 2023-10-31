@@ -10,16 +10,15 @@ _XPP_REG_FUN_(MYSQL4XB_RESULTSET_T)
       TXbClass* pc = new TXbClass; pc->ClassName("MYSQL4XB_RESULTSET_T");
       pc->EXPORTED();
       pc->Var("__m__rowset__");
-      pc->Var("__m__mysql__");
 
       // -------------------
-      pc->MethodCB("init", "{|s,rowset_object,mysql| s:__m__rowset__ := rowset_object , s:__m__mysql__ :=  mysql ,  s }");
+      pc->MethodCB("init", "{|s,rowset_object,mysql,sql| rowset_object:set_prop( 'sql' , sql ), rowset_object:set_prop( 'mysql' , mysql) , s:__m__rowset__ := rowset_object ,  s }");
       pc->MethodCB("rowset", "{|s| s:__m__rowset__  }");
       // -------------------
       pc->MethodCB("DbGoTop", "{|s|  s:__m__rowset__:go_top() }" );
       pc->MethodCB("DbGoBottom", "{|s|  s:__m__rowset__:go_bottom() }");
       pc->MethodCB("DbSkip", "{|s,n|  s:__m__rowset__:skip(n) }");
-      pc->MethodCB("Pos", "{|s,pos| iif( pos == NIL, s:__m__rowset__:get_row_pos() , s:__m__rowset__:set_row_pos(n) ) }");
+      pc->MethodCB("Pos", "{|s,pos| iif( pos == NIL, s:__m__rowset__:get_row_pos() , s:__m__rowset__:set_row_pos(pos) ) }");
       pc->MethodCB("LastRow", "{|s|  s:__m__rowset__:get_row_count() }");
       pc->MethodCB("eof", "{|s|  s:__m__rowset__:eof() }");
       pc->MethodCB("bof", "{|s|  s:__m__rowset__:bof() }");
@@ -42,6 +41,9 @@ _XPP_REG_FUN_(MYSQL4XB_RESULTSET_T)
       pc->MethodCB("IsNewRow", "{|s|  s:__m__rowset__:is_new_row() }");
       pc->MethodCB("deleted", "{|s|  s:__m__rowset__:is_row_marked_to_delete() }");
       // ------      
+      pc->MethodCB("get_prop", "{|s,k| s:__m__rowset__:props:get_prop( k) }");
+      pc->MethodCB("is_prop", "{|s,k| s:__m__rowset__:is_prop( k) }");
+      pc->MethodCB("set_prop", "{|s,k,v| s:__m__rowset__:set_prop( k,v) }");
 
       conco = pc->Create();
       delete pc;

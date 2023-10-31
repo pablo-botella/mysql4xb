@@ -1,8 +1,8 @@
 #include <windows.h>
 
 1 VERSIONINFO
-FILEVERSION 1,0,1,0
-PRODUCTVERSION 1,0,1,0
+FILEVERSION 1,0,2,0
+PRODUCTVERSION 1,0,2,0
 FILEOS VOS__WINDOWS32
 FILETYPE VFT_DLL
 {
@@ -12,7 +12,7 @@ FILETYPE VFT_DLL
   {
    VALUE "CompanyName", "Pablo Botella\r\nwww.xbwin.com\r\n\0"
    VALUE "FileDescription", "libmysql cli wrapper for Xbase++ \000"
-   VALUE "FileVersion", "1.0.1.0\000\000"
+   VALUE "FileVersion", "1.0.2.0\000\000"
    VALUE "InternalName", "mysql4xb\000"
    VALUE "LegalCopyright", "Pablo Botella Navarro.\000\000"
    VALUE "OriginalFilename", "mysql4xb.dll\000"

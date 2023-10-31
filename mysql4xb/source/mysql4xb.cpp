@@ -36,15 +36,18 @@ BOOL WINAPI DllMain(HINSTANCE hDll, DWORD dwReason, LPVOID lpReserved)
       case DLL_PROCESS_ATTACH:
       {
          hMySql4XbInstance = hDll;
+         
          if (!_conRegisterDll((ULONG)hDll, &__dllreg__)) return 0;
          break;
       }
       case DLL_THREAD_ATTACH:
       {
+         mysql_thread_init();
          break;
       }
       case DLL_THREAD_DETACH:
       {
+         mysql_thread_end();
          break;
       }
       case DLL_PROCESS_DETACH:
@@ -60,6 +63,8 @@ BOOL WINAPI DllMain(HINSTANCE hDll, DWORD dwReason, LPVOID lpReserved)
 //----------------------------------------------------------------------------------------------------------------------
 XBASE_INIT_PROC()
 {
+   mysql_library_init(0, 0, 0);
+   mysql_thread_init();
    mysqlxb_global_flags[(DWORD)mysqlxb_global_flags_enum::tiny_to_bool] = 1;
    mysqlxb_global_flags[(DWORD)mysqlxb_global_flags_enum::null_to_empty] = 1;
 
@@ -96,6 +101,12 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
       pc->Var("m_result_field_class_object");
       pc->Var("m_result_rows_class_object");
       pc->Var("m_last_connect_result");
+      pc->Var("m_props");
+
+      // --------------------
+      pc->MethodCB("get_prop", "{|s,k| s:m_props:get_prop( k) }");
+      pc->MethodCB("is_prop", "{|s,k| s:m_props:is_prop( k) }");
+      pc->MethodCB("set_prop", "{|s,k,v| s:m_props:set_prop( k,v) }");
 
       // --------------------
       pc->ClassProperty_cbbs("flag_CLIENT_LONG_PASSWORD", "{|| %i }", CLIENT_LONG_PASSWORD);
@@ -143,8 +154,9 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
          ", s:m_result_field_class_object := MYSQL4XB_RESULT_FIELD_T()  " 
          ", s:m_result_rows_class_object  := MYSQL4XB_RESULT_ROWS_T()"
          ", s:m_last_connect_result := NIL  "
+         ", s:m_props := _ot4xb_expando_():new()  "
          ", s }",
-         (DWORD)mysql_init );
+         (DWORD) mysql_init );
       // -------------------
       pc->Method_cbbs("close", "{|s|  nFpCall( %i , s:m_mysql ) , s:m_mysql := 0 , s  }", (DWORD)mysql_close);
       pc->Method_cbbs("last_error", "{|s|  nFpCall( %i , s:m_mysql )   }", (DWORD) mysql_errno );
@@ -206,7 +218,7 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
          ",s)}", mysql_xb_quick_query); // mysql_xb_quick_query(1pMysql,2sql,3rs_co,4 rows_co , 5 fld_co, 6 self) // ::exec( sql ) -> resulset | NIL
       
       pc->Method_cbbs("field_count", "{|s|   nFpCall( %i , s:m_mysql) }", mysql_field_count);
-
+      pc->Method_cbbs("last_insert_id","{|s,q| q := PeekDWord( FpQCall(%i,'__sq__pt',s:m_mysql),0,2), q[1]}", mysql_insert_id);
 
       conco = pc->Create();
       delete pc;

@@ -17,7 +17,8 @@ _XPP_REG_FUN_(MYSQL4XB_RESULT_ROWS_T)
       pc->Var("row_count");
       pc->Var("col_count");
       pc->Var("throw_type_error");
-
+      pc->Var("props");
+      
       // -------------------
       pc->Method_cbbs("init", "{|s,col_count , row_count | XbFpCall( %i ,s,col_count , row_count ) }", result_rows_ns::init);
       // -------------------
@@ -68,6 +69,10 @@ _XPP_REG_FUN_(MYSQL4XB_RESULT_ROWS_T)
       // ------------------
       pc->Method_cbbs("remove_row_from_rowset", "{|s,lGhost|   XbFpCall(%i,s,@lGhost) }", result_rows_ns::remove_row_from_rowset);
       // ------------------
+      pc->MethodCB("get_prop", "{|s,k| s:props:get_prop( k) }");
+      pc->MethodCB("is_prop" , "{|s,k| s:props:is_prop( k) }");
+      pc->MethodCB("set_prop", "{|s,k,v| s:props:set_prop( k,v) }");
+
 
       conco = pc->Create();
       delete pc;
@@ -325,6 +330,15 @@ namespace result_rows_ns
       {
          _conSetLMember(Self, "throw_type_error", TRUE);
       }
+
+      // ---  ::props         := _ot4xb_expando_():new()
+      {
+         ContainerHandle cono_props = _conNewObj("_ot4xb_expando_", NULLCONTAINER);
+         _conSetMember(Self, "props", cono_props);
+         _conRelease(cono_props); cono_props = NULLCONTAINER;
+      }
+
+
       xpp[0]->Put(Self);
    }
    // ------------------------------------------------------------------------------------------------------------------------------------------
@@ -493,10 +507,11 @@ namespace result_rows_ns
       }
       // -----  metadata[2] := .F. ; metadata[2] := .F. ; 
       {
-         ContainerHandle con_false = _conPutL(NULLCONTAINER, FALSE);
-         _conArrayPut(cona_metadata, con_false, 2, 0);
-         _conArrayPut(cona_metadata, con_false, 3, 0);
-         _conRelease(con_false); con_false = NULLCONTAINER;
+         ContainerHandle con_bool = _conPutL(NULLCONTAINER, FALSE);
+         _conArrayPut(cona_metadata, con_bool, meta_pos_e::deleted, 0);
+         _conPutL(con_bool, TRUE);
+         _conArrayPut(cona_metadata, con_bool, meta_pos_e::new_row, 0);
+         _conRelease(con_bool); con_bool= NULLCONTAINER;
       }
       // s:row_set[row_pos][1] : = __anew(ChrR(48, s:col_count + 1), .F., .F., NIL) "
       _conArrayPut(cona_row_set, cona_metadata, row_count, 1, 0);
@@ -532,7 +547,8 @@ namespace result_rows_ns
    {
       TXppParamList xpp(pl, 2);
       ContainerHandle Self = xpp[1]->con();
-      if (xpp[2]->GetLong() == 0)
+
+      if (xpp[2]->CheckType( XPP_NUMERIC | XPP_UNDEF) && (xpp[2]->GetLong() == 0 ) )
       {
          _conGetMember(Self, "fields", xpp[0]->con());
       }

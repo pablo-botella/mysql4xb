@@ -212,7 +212,7 @@ void __cdecl mysql_xb_quick_query(XppParamList pl)
       {
 
          int status = mysql_real_query(my, sql, sql_cb);
-
+         xpp[2]->UnlockStr();
 
          for (; status == 0; status = mysql_next_result(my)  )
          {
@@ -238,17 +238,16 @@ void __cdecl mysql_xb_quick_query(XppParamList pl)
                   con_rows_object = _conNew(NULLCONTAINER);
                   if (_conCallMethodPa(con_rows_object, "new", 3, con_params))
                   {
-                     _conRelease(con_rows_object);
-                     con_rows_object = NULLCONTAINER;
+                     _conRelease(con_rows_object); con_rows_object = NULLCONTAINER;
                   }
-                  _conRelease(con_params[1]);
-                  _conRelease(con_params[2]);
+                  _conRelease(con_params[1]); con_params[1] = NULLCONTAINER;
+                  _conRelease(con_params[2]); con_params[1] = NULLCONTAINER;
                }
                if (con_rows_object)
                {
-                  ContainerHandle con_params[] = { con_result_class_object , con_rows_object , xpp[6]->con() };
+                  ContainerHandle con_params[] = { con_result_class_object , con_rows_object , xpp[6]->con() , xpp[2]->con() };
                   con_result_object = _conNew(NULLCONTAINER);
-                  if (_conCallMethodPa(con_result_object, "new", 3, con_params))
+                  if (_conCallMethodPa(con_result_object, "new", 4, con_params))
                   {
                      _conRelease(con_rows_object);
                      con_rows_object = NULLCONTAINER;
