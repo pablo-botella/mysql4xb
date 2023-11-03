@@ -28,7 +28,7 @@ _XPP_REG_FUN_(MYSQL4XB_RESULT_ROWS_T)
       // -------------------
       pc->Method_cbbs("__init_empty_row", "{|s,row_pos,col_array| XbFpCall( %i,s,row_pos,col_array ) }", result_rows_ns::__init_empty_row);
       // -------------------
-      pc->Method_cbbs("add_blank_row", "{|s|  XbFpCall( %i, s ) }", result_rows_ns::add_blank_row);
+      pc->Method_cbbs("add_blank_row", "{|s,flags|  XbFpCall( %i, s , flags ) }", result_rows_ns::add_blank_row);
       // -------------------
       pc->Method_cbbs("get_col_pos", "{|s,k| XbFpCall(%i,s,k) }", result_rows_ns::get_col_position);
       pc->Method_cbbs("get_col_name", "{|s,k| XbFpCall(%i,s,k) }", result_rows_ns::get_col_name);
@@ -464,12 +464,13 @@ namespace result_rows_ns
    }
 
    // ------------------------------------------------------------------------------------------------------------------------------------------
-   void add_blank_row(XppParamList pl)  // add_blank_row( Self ) 
+   void add_blank_row(XppParamList pl)  // add_blank_row( Self , flags)  // flags == 1 do not copy the ghost record
    {
-      TXppParamList xpp(pl, 1);
+      TXppParamList xpp(pl, 2);
       ContainerHandle Self = xpp[1]->con();
       DWORD col_count = _conGetNLMember(Self, "col_count");
       DWORD row_count = _conGetNLMember(Self, "row_count");
+      DWORD flags = xpp[2]->GetDWord();
 
       ContainerHandle cona_row_set = _conNew(NULLCONTAINER);
       _conGetMember(Self, "row_set", cona_row_set);
@@ -488,6 +489,22 @@ namespace result_rows_ns
       // --- s:row_set[row_pos][2] := Array( col_count) 
       {
          ContainerHandle cona_array_values = _conNewArray(1, col_count);
+
+         if (!(flags & 1))
+         {
+            ContainerHandle con_tmp = _conNew(NULLCONTAINER);
+            ContainerHandle con_ghost = _conNew(NULLCONTAINER);
+            _conGetMember(Self, "blank_row", con_ghost);
+            for (DWORD fp = 1; fp <= col_count; col_count++)
+            {
+               if( _conArrayGet(con_ghost,con_tmp,fp,0) )
+               {
+                  _conArrayPut(cona_array_values, con_tmp, fp, 0);
+               }
+            }
+            _conRelease(con_ghost); con_ghost = NULLCONTAINER;
+            _conRelease(con_tmp); con_tmp = NULLCONTAINER;
+         }
          _conArrayPut(cona_row_set, cona_array_values, row_count, 2, 0);
          _conRelease(cona_array_values);
 

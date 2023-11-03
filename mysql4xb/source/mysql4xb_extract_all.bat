@@ -3,8 +3,8 @@ md mysql4xb_bin
 rd mysql4xb_source  /s /q
 md mysql4xb_source
 
-7z x _mysql4xb_001_000_002_000.zip  -o.\mysql4xb_bin
-7z x _mysql4xb_001_000_002_000_source.zip  -o.\mysql4xb_source
+7z x _mysql4xb_001_000_003_000.zip  -o.\mysql4xb_bin
+7z x _mysql4xb_001_000_003_000_source.zip  -o.\mysql4xb_source
 
 if exist "c:\util\mysql4xb_autodeploy.bat" ( 
 call "c:\util\mysql4xb_autodeploy.bat"  %~dp0mysql4xb_bin\  
