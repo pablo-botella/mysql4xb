@@ -71,4 +71,9 @@
     </None>
     <None Include="cpp.hint" />
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="mysql4xb.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
 </Project>

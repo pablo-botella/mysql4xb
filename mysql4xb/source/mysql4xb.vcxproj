@@ -208,6 +208,9 @@
     <None Include="__mklib.bat" />
     <None Include="__mk_package.bat" />
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="mysql4xb.rc" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
