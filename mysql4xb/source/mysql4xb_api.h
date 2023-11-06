@@ -31,6 +31,41 @@ void __cdecl mysql_xb_set_option_bool(XppParamList pl);
 void __cdecl mysql_xb_set_option_string(XppParamList pl);
 // --------
 void __cdecl mysql_xb_real_connect(XppParamList pl);
+
+void __cdecl mysql_xb_init(XppParamList pl);
+void __cdecl mysql_xb_close(XppParamList pl);
+void __cdecl mysql_xb_last_error(XppParamList pl);
+void __cdecl mysql_xb_last_error_string(XppParamList pl);
+void __cdecl mysql_xb_info(XppParamList pl);
+void __cdecl mysql_xb_commit(XppParamList pl);
+void __cdecl mysql_xb_ping(XppParamList pl);
+void __cdecl mysql_xb_rollback(XppParamList pl);
+
+void __cdecl mysql_xb_affected_rows(XppParamList pl);
+void __cdecl mysql_xb_last_inserted_id(XppParamList pl);
+void __cdecl mysql_xb_field_count(XppParamList pl);
+
+// my_bool         mysql_autocommit(MYSQL* mysql,   my_bool mode)
+// const char* mysql_character_set_name(MYSQL* mysql)
+// const char* mysql_get_server_info(MYSQL* mysql)
+// unsigned long mysql_real_escape_string_quote(MYSQL* mysql,char* to,const char* from,unsigned long length, char quote)
+// const char* mysql_get_client_info(void)
+// unsigned long mysql_get_client_version(void)
+// const char* mysql_get_host_info(MYSQL* mysql)
+// unsigned int mysql_get_proto_info(MYSQL* mysql)
+// const char* mysql_get_server_info(MYSQL* mysql) 
+// unsigned long mysql_get_server_version(MYSQL* mysql)
+// const char* mysql_get_ssl_cipher(MYSQL* mysql)
+// unsigned long mysql_hex_string(char* to,    const char* from,    unsigned long length)
+
+
+
+
+
+
+
+
+
 void __cdecl mysql_xb_quick_query(XppParamList pl);
 
 // ------------------------------------------------------------------------------------------------------------------------------------------------------------------

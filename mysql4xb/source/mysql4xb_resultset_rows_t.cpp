@@ -495,7 +495,7 @@ namespace result_rows_ns
             ContainerHandle con_tmp = _conNew(NULLCONTAINER);
             ContainerHandle con_ghost = _conNew(NULLCONTAINER);
             _conGetMember(Self, "blank_row", con_ghost);
-            for (DWORD fp = 1; fp <= col_count; col_count++)
+            for (DWORD fp = 1; fp <= col_count; fp++)
             {
                if( _conArrayGet(con_ghost,con_tmp,fp,0) )
                {

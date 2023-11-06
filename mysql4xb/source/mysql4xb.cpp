@@ -108,6 +108,21 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
       pc->MethodCB("is_prop", "{|s,k| s:m_props:is_prop( k) }");
       pc->MethodCB("set_prop", "{|s,k,v| s:m_props:set_prop( k,v) }");
 
+      // -------------------
+      pc->Method_cbbs("init", "{|s,flags| "
+         ", s:m_resultset_class_object := MYSQL4XB_RESULTSET_T() "
+         ", s:m_result_field_class_object := MYSQL4XB_RESULT_FIELD_T()  "
+         ", s:m_result_rows_class_object  := MYSQL4XB_RESULT_ROWS_T()"
+         ", s:m_last_connect_result := NIL  "
+         ", s:m_props := _ot4xb_expando_():new()  "
+         ", XbFpCall(%i,s,flags) }", (DWORD) mysql_xb_init);
+      pc->Method_cbbs("close", "{|s| XbFpCall(%i,s) }", (DWORD) mysql_xb_close);
+      pc->Method_cbbs("last_error", "{|s|   XbFpCall(%i,s)  }", (DWORD) mysql_xb_last_error);
+      pc->Method_cbbs("last_error_string", "{|s| XbFpCall(%i,s) }", (DWORD) mysql_xb_last_error_string);
+      pc->Method_cbbs("info", "{|s| XbFpCall(%i,s) }", (DWORD) mysql_xb_info);
+      pc->Method_cbbs("commit", "{|s| XbFpCall(%i,s) }", (DWORD) mysql_xb_commit);
+      pc->Method_cbbs("ping", "{|s| XbFpCall(%i,s) }", (DWORD) mysql_xb_ping);
+      pc->Method_cbbs("rollback", "{|s|  XbFpCall(%i,s) }", (DWORD) mysql_xb_rollback);
       // --------------------
       pc->ClassProperty_cbbs("flag_CLIENT_LONG_PASSWORD", "{|| %i }", CLIENT_LONG_PASSWORD);
       pc->ClassProperty_cbbs("flag_CLIENT_FOUND_ROWS", "{|| %i }", CLIENT_FOUND_ROWS);
@@ -145,26 +160,7 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
       pc->ClassMethod_cbbs("mysql4xb_global_flags_tiny_to_bool", "{|s,v| s:mysql4xb_global_flags_set_get( %i , v )  }", mysqlxb_global_flags, mysqlxb_global_flags_enum::tiny_to_bool);
       pc->ClassMethod_cbbs("mysql4xb_global_flags_null_to_empty", "{|s,v| s:mysql4xb_global_flags_set_get( %i , v )  }", mysqlxb_global_flags, mysqlxb_global_flags_enum::null_to_empty);
       // -------------------
-      pc->ClassMethod_cbbs("mysql_library_init", "{|| nFpCall( %i,0,0,0) }", (DWORD)mysql_library_init);
-      pc->ClassMethod_cbbs("mysql_library_end", "{|| nFpCall( %i) }", (DWORD)mysql_library_end);
-      // -------------------
-      pc->Method_cbbs("init", "{|s,flags| s:m_mysql4xb_flags := nOr( __vnum(flags,1) ) "
-         ", s:m_mysql := nFpCall( %i , 0 ) "         // 1
-         ", s:m_resultset_class_object := MYSQL4XB_RESULTSET_T() "
-         ", s:m_result_field_class_object := MYSQL4XB_RESULT_FIELD_T()  " 
-         ", s:m_result_rows_class_object  := MYSQL4XB_RESULT_ROWS_T()"
-         ", s:m_last_connect_result := NIL  "
-         ", s:m_props := _ot4xb_expando_():new()  "
-         ", s }",
-         (DWORD) mysql_init );
-      // -------------------
-      pc->Method_cbbs("close", "{|s|  nFpCall( %i , s:m_mysql ) , s:m_mysql := 0 , s  }", (DWORD)mysql_close);
-      pc->Method_cbbs("last_error", "{|s|  nFpCall( %i , s:m_mysql )   }", (DWORD) mysql_errno );
-      pc->Method_cbbs("last_error_string", "{|s|  FpQCall( %i ,'c_sz__sl' , s:m_mysql )   }", (DWORD)mysql_error);
-      pc->Method_cbbs("info", "{|s|  FpQCall( %i ,'c_sz__sl' , s:m_mysql )   }", (DWORD) mysql_info);
-      pc->Method_cbbs("commit", "{|s|  lAnd( nFpCall( %i , s:m_mysql ) , 0xFF)   }", (DWORD) mysql_commit);
-      pc->Method_cbbs("ping", "{|s|  nFpCall( %i , s:m_mysql )   }", (DWORD)mysql_ping);
-      pc->Method_cbbs( "rollback" , "{|s|  lAnd( nFpCall( %i , s:m_mysql ) , 0xFF)   }", (DWORD) mysql_rollback);
+ 
       
       
       // -------------------
@@ -217,8 +213,15 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
          ",s:m_result_field_class_object" // 5
          ",s)}", mysql_xb_quick_query); // mysql_xb_quick_query(1pMysql,2sql,3rs_co,4 rows_co , 5 fld_co, 6 self) // ::exec( sql ) -> resulset | NIL
       
-      pc->Method_cbbs("field_count", "{|s|   nFpCall( %i , s:m_mysql) }", mysql_field_count);
-      pc->Method_cbbs("last_insert_id","{|s,q| q := PeekDWord( FpQCall(%i,'__sq__pt',s:m_mysql),0,2), q[1]}", mysql_insert_id);
+      pc->Method_cbbs("field_count", "{|s| nFpCall( %i , s ) }",mysql_xb_field_count );
+      pc->Method_cbbs("last_insert_id","{|s|  XbFpCall(%i,s) }", mysql_xb_last_inserted_id);
+      pc->Method_cbbs("affected_rows", "{|s|  XbFpCall(%i,s) }", mysql_xb_affected_rows );
+      
+      
+
+
+
+
 
       conco = pc->Create();
       delete pc;

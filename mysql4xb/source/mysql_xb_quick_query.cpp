@@ -433,7 +433,7 @@ void __cdecl mysql_xb_quick_query(XppParamList pl)
             {
                if (mysql_field_count(my) == 0)
                {
-                  xpp[0]->PutQWord(mysql_affected_rows(my));
+                     xpp[0]->PutQWordAsNumeric((LONGLONG) mysql_affected_rows(my));
                }
             }
             
