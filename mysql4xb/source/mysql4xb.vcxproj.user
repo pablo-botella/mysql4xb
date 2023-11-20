@@ -11,5 +11,6 @@
     <LocalDebuggerCommand>V:\mysql4xb\mysql4xb\Release\testmysql001.exe</LocalDebuggerCommand>
     <LocalDebuggerWorkingDirectory>V:\mysql4xb\mysql4xb\Release</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>
 </Project>

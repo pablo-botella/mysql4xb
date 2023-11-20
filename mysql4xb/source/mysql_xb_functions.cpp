@@ -61,7 +61,7 @@ void __cdecl mysql_xb_init(XppParamList pl)
    TXppParamList xpp(pl, 2);
    ContainerHandle Self = xpp[1]->con();
    LONG flags = xpp[2]->CheckType(XPP_NUMERIC) ? xpp[2]->GetLong() : 1;
-   MYSQL* my = (MYSQL*)_conGetNLMember(Self, "m_mysql");
+   MYSQL* my = (MYSQL*) _conGetNLMember(Self, "m_mysql");
    _conSetNLMember(Self, "m_mysql4xb_flags", flags);
    if (my)
    {
@@ -70,7 +70,6 @@ void __cdecl mysql_xb_init(XppParamList pl)
    my = mysql_init((MYSQL*) 0 );
    _conSetNLMember(Self, "m_mysql", (LONG)((void*)my));
    xpp[0]->Put(Self);
-
 }
 // -------------------------------------------------------------------------------------------------------------
 void __cdecl mysql_xb_close(XppParamList pl)

@@ -24,6 +24,7 @@ _XPP_REG_FUN_(MYSQL4XB_RESULT_FIELD_T)
       pc->Var("ot4xb_sql_type");
       pc->Var("xbase_type");
       pc->Var("xbase_empty_value");
+      pc->Var("escape_flags");
 
       pc->Property_cbbs("is_NOT_NULL", "{|s| lAnd(s:flags , %i) }", NOT_NULL_FLAG);
       pc->Property_cbbs("is_PRI_KEY", "{|s| lAnd(s:flags , %i) }", PRI_KEY_FLAG);
@@ -40,7 +41,7 @@ _XPP_REG_FUN_(MYSQL4XB_RESULT_FIELD_T)
       pc->Property_cbbs("is_NO_DEFAULT_VALUE", "{|s| lAnd(s:flags , %i) }", NO_DEFAULT_VALUE_FLAG);
 
       // -------------------
-      pc->MethodCB("escape_value", "{|s,v| ot4xb_sql_dump_value_ansi(v,s:ot4xb_sql_type,s:length,s:decimals,iif( s:is_NOT_NULL,  0x010000 , 0)  ) }");
+      pc->MethodCB("escape_value", "{|s,v| ot4xb_sql_dump_value_ansi(v,s:ot4xb_sql_type,s:length,s:decimals,s:escape_flags ) }");
       // -------------------
       pc->MethodCB("init", "{|s| s }");
       // -------------------

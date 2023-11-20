@@ -67,6 +67,7 @@ XBASE_INIT_PROC()
    mysql_thread_init();
    mysqlxb_global_flags[(DWORD)mysqlxb_global_flags_enum::tiny_to_bool] = 1;
    mysqlxb_global_flags[(DWORD)mysqlxb_global_flags_enum::null_to_empty] = 1;
+   mysqlxb_global_flags[(DWORD)mysqlxb_global_flags_enum::auto_truncate_values] = 1;
 
    return 1;
 }
@@ -110,12 +111,13 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
 
       // -------------------
       pc->Method_cbbs("init", "{|s,flags| "
-         ", s:m_resultset_class_object := MYSQL4XB_RESULTSET_T() "
+         "  s:m_resultset_class_object := MYSQL4XB_RESULTSET_T() "
          ", s:m_result_field_class_object := MYSQL4XB_RESULT_FIELD_T()  "
          ", s:m_result_rows_class_object  := MYSQL4XB_RESULT_ROWS_T()"
          ", s:m_last_connect_result := NIL  "
          ", s:m_props := _ot4xb_expando_():new()  "
-         ", XbFpCall(%i,s,flags) }", (DWORD) mysql_xb_init);
+         ", XbFpCall(%i,s,flags) }", (DWORD) mysql_xb_init );
+
       pc->Method_cbbs("close", "{|s| XbFpCall(%i,s) }", (DWORD) mysql_xb_close);
       pc->Method_cbbs("last_error", "{|s|   XbFpCall(%i,s)  }", (DWORD) mysql_xb_last_error);
       pc->Method_cbbs("last_error_string", "{|s| XbFpCall(%i,s) }", (DWORD) mysql_xb_last_error_string);
@@ -159,6 +161,10 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
       // --------------------
       pc->ClassMethod_cbbs("mysql4xb_global_flags_tiny_to_bool", "{|s,v| s:mysql4xb_global_flags_set_get( %i , v )  }", mysqlxb_global_flags, mysqlxb_global_flags_enum::tiny_to_bool);
       pc->ClassMethod_cbbs("mysql4xb_global_flags_null_to_empty", "{|s,v| s:mysql4xb_global_flags_set_get( %i , v )  }", mysqlxb_global_flags, mysqlxb_global_flags_enum::null_to_empty);
+      pc->ClassMethod_cbbs("mysql4xb_global_flags_auto_truncate_values", "{|s,v| s:mysql4xb_global_flags_set_get( %i , v )  }", mysqlxb_global_flags, mysqlxb_global_flags_enum::auto_truncate_values);
+
+      
+
       // -------------------
  
       

@@ -192,6 +192,14 @@ ContainerHandle mysql_xb_quick_query_create_field_object_container_handle(MYSQL_
    con_value = mysql_xb_quick_query_sqltype_to_xbase_blank_value(con_value, field);
    _conSetMember(con_field_object, "xbase_empty_value", con_value);
 
+   DWORD escape_flags = ( mysqlxb_global_flags[(DWORD) mysqlxb_global_flags_enum::auto_truncate_values] & 0xFF  ? (DWORD)  ot4xb_sql_type_flag::Truncate : 0 );
+   if (field.flags & NOT_NULL_FLAG)
+   {
+      escape_flags |= (DWORD)ot4xb_sql_type_flag::NotNull;
+   }
+   con_value = _conPutNL(con_value, (LONG) escape_flags );
+   _conSetMember(con_field_object, "escape_flags", con_value);
+
    _conRelease(con_value);
    con_value = NULLCONTAINER;
    return con_field_object;

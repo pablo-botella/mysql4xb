@@ -19,6 +19,8 @@ enum class mysqlxb_global_flags_enum : DWORD
 {
    tiny_to_bool,
    null_to_empty,
+   auto_truncate_values,
+
    max_flags
 };
 
