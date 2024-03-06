@@ -20,6 +20,8 @@ _XPP_REG_FUN_(MYSQL4XB_RESULT_ROWS_T)
       pc->Var("props");
       
       // -------------------
+      pc->MethodCB("truncate", "{|s | s:row_set := Array(0) , s:row_pos := 0 , s:row_count := 0 , s}");
+      // -------------------
       pc->Method_cbbs("init", "{|s,col_count , row_count | XbFpCall( %i ,s,col_count , row_count ) }", result_rows_ns::init);
       // -------------------
       pc->Method_cbbs("add_colname_alias", "{|s,col_name , col_alias | XbFpCall( %i ,s,col_name , col_alias)}", result_rows_ns::add_colname_alias);
