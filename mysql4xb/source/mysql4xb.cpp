@@ -28,9 +28,9 @@ BEGIN_REGISTER_XBASE_TABLE()
 #include <MySql4Xb_xbfunclist.hpp>
 END_REGISTER_XBASE_TABLE()
 //----------------------------------------------------------------------------------------------------------------------
-BOOL WINAPI DllMain(HINSTANCE hDll, DWORD dwReason, LPVOID lpReserved)
+BOOL WINAPI DllMain(HINSTANCE hDll, DWORD dwReason, LPVOID )
 {
-   lpReserved; // UNUSED PARAM
+   
    switch (dwReason)
    {
       case DLL_PROCESS_ATTACH:

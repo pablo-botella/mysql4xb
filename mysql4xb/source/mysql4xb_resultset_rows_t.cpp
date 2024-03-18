@@ -18,7 +18,7 @@ _XPP_REG_FUN_(MYSQL4XB_RESULT_ROWS_T)
       pc->Var("col_count");
       pc->Var("throw_type_error");
       pc->Var("props");
-      
+
       // -------------------
       pc->MethodCB("truncate", "{|s | s:row_set := Array(0) , s:row_pos := 0 , s:row_count := 0 , s}");
       // -------------------
@@ -72,7 +72,7 @@ _XPP_REG_FUN_(MYSQL4XB_RESULT_ROWS_T)
       pc->Method_cbbs("remove_row_from_rowset", "{|s,lGhost|   XbFpCall(%i,s,@lGhost) }", result_rows_ns::remove_row_from_rowset);
       // ------------------
       pc->MethodCB("get_prop", "{|s,k| s:props:get_prop( k) }");
-      pc->MethodCB("is_prop" , "{|s,k| s:props:is_prop( k) }");
+      pc->MethodCB("is_prop", "{|s,k| s:props:is_prop( k) }");
       pc->MethodCB("set_prop", "{|s,k,v| s:props:set_prop( k,v) }");
 
 
@@ -100,9 +100,9 @@ namespace result_rows_ns
       ContainerHandle Self = xpp[1]->con();
       LONG row_pos = _conGetNLMember(Self, "row_pos");
       LONG row_count = _conGetNLMember(Self, "row_count");
-      DWORD col_count = _conGetNLMember(Self, "col_count");
+      DWORD col_count = (DWORD)_conGetNLMember(Self, "col_count");
       DWORD col_pos;
-      BOOL lGhost = (row_count > 0 && row_pos <= row_count ) ? FALSE : TRUE;
+      BOOL lGhost = (row_count > 0 && row_pos <= row_count) ? FALSE : TRUE;
       ContainerHandle con_value = NULLCONTAINER;
       con_field_object = _get_field_object(Self, xpp[2]->con(), col_count, col_pos, con_field_object);
 
@@ -135,13 +135,13 @@ namespace result_rows_ns
    {
       switch (xbase_numeric_type & 0xFF)
       {
-         case XPP_CHARACTER: return 'C';
-         case XPP_NUMERIC: return 'N';
-         case XPP_DATE: return 'D';
-         case XPP_LOGICAL: return 'L';
-         case XPP_ARRAY: return 'A';
-         case XPP_OBJECT: return 'O';
-         default: return 'U';
+      case XPP_CHARACTER: return 'C';
+      case XPP_NUMERIC: return 'N';
+      case XPP_DATE: return 'D';
+      case XPP_LOGICAL: return 'L';
+      case XPP_ARRAY: return 'A';
+      case XPP_OBJECT: return 'O';
+      default: return 'U';
       }
    }
    // -----------------------------------------------------------------------------------------------------------------------------
@@ -185,27 +185,28 @@ namespace result_rows_ns
          _conType(con_k, &type);
          switch (type & 0xFF)
          {
-            case XPP_CHARACTER:
+         case XPP_CHARACTER:
+         {
+            char name[128] = { 0 };
+            DWORD dw = 0;
+            _conGetCL(con_k, &dw, name, sizeof(name) - 1);
+            if (dw)
             {
-               char name[128] = { 0 };
-               DWORD dw = 0;
-               _conGetCL(con_k, &dw, name, sizeof(name) - 1);
-               if (dw)
+               ContainerHandle con_field_map = _conNew(NULLCONTAINER);
+               _conGetMember(Self, "field_map", con_field_map);
+               if (_conCheckType(con_field_map, XPP_OBJECT))
                {
-                  ContainerHandle con_field_map = _conNew(NULLCONTAINER);
-                  _conGetMember(Self, "field_map", con_field_map);
-                  if (_conCheckType(con_field_map, XPP_OBJECT))
-                  {
-                     position = (DWORD)_conMCallLong(con_field_map, "get_prop", name);
-                  }
-                  _conRelease(con_field_map); con_field_map = NULLCONTAINER;
+                  position = (DWORD)_conMCallLong(con_field_map, "get_prop", name);
                }
+               _conRelease(con_field_map); con_field_map = NULLCONTAINER;
             }
-            case XPP_NUMERIC:
-            {
-               _conGetNL(con_k, (LONG*)&position);
-               break;
-            }
+            break;
+         }
+         case XPP_NUMERIC:
+         {
+            _conGetNL(con_k, (LONG*)&position);
+            break;
+         }
          }
       }
       if (position > col_count)
@@ -232,43 +233,44 @@ namespace result_rows_ns
       {
          ContainerHandle cona_row_set = _conNew(NULLCONTAINER);
          _conGetMember(Self, "row_set", cona_row_set);
-         switch (meta_pos)
+         switch ((int) meta_pos)
          {
-            case meta_pos_e::changed:
+         case (int) meta_pos_e::changed:
+         {
+            if (meta_action == meta_action_e::get) // will support only get operation here
             {
-               if (meta_action == meta_action_e::get) // will support only get operation here
-               {
-                  ContainerHandle con_change_flags = _conNew(NULLCONTAINER);
-                  _conArrayGet(cona_row_set, con_change_flags, row_pos, 1, 1, 0);
+               ContainerHandle con_change_flags = _conNew(NULLCONTAINER);
+               _conArrayGet(cona_row_set, con_change_flags, row_pos, 1, 1, 0);
 
-                  DWORD cb_flags = 0;
-                  LPSTR ps_flags = 0;
-                  if (_conRLockC(con_change_flags, &ps_flags, &cb_flags) == 0)
+               DWORD cb_flags = 0;
+               LPSTR ps_flags = 0;
+               if (_conRLockC(con_change_flags, &ps_flags, &cb_flags) == 0)
+               {
+                  if (col_pos < cb_flags)
                   {
-                     if (col_pos < cb_flags)
-                     {
-                        xpp[0]->PutBool(ps_flags[col_pos] == '1' ? TRUE : FALSE);
-                     }
-                     _conUnlockC(con_change_flags);
+                     xpp[0]->PutBool(ps_flags[col_pos] == '1' ? TRUE : FALSE);
                   }
-                  ps_flags = 0;
-                  _conRelease(con_change_flags); con_change_flags = NULLCONTAINER;
+                  _conUnlockC(con_change_flags);
                }
-               break;
+               ps_flags = 0;
+               _conRelease(con_change_flags); con_change_flags = NULLCONTAINER;
             }
-            case meta_pos_e::new_row:
-            case meta_pos_e::deleted:
+            break;
+         }
+         case (int) meta_pos_e::new_row:
+         case (int) meta_pos_e::deleted:
+         {
+            if (meta_action == meta_action_e::set)
             {
-               if (meta_action == meta_action_e::set)
-               {
-                  _conArrayPutL(cona_row_set, lOnOff, row_pos, 1, meta_pos, 0);
-               }
-               else
-               {
-                  _conArrayGet(cona_row_set, xpp[0]->con(), row_pos, 1, meta_pos, 0);
-               }
-               break;
+               _conArrayPutL(cona_row_set, lOnOff, row_pos, 1, meta_pos, 0);
             }
+            else
+            {
+               _conArrayGet(cona_row_set, xpp[0]->con(), row_pos, 1, meta_pos, 0);
+            }
+            break;
+         }
+         
          }
          _conRelease(cona_row_set); cona_row_set = NULLCONTAINER;
       }
@@ -359,10 +361,10 @@ namespace result_rows_ns
          {
             if (_conMCallLong(con_field_map, "get_prop", psz_alias_name) == 0) // alias_name must not already exist
             {
-               DWORD position = _conMCallLong(con_field_map, "get_prop", psz_col_name);
+               DWORD position = (DWORD)_conMCallLong(con_field_map, "get_prop", psz_col_name);
                if (position) // col_name found
                {
-                  _conMCallVoid(con_field_map, "set_prop", psz_alias_name, position);
+                  _conMCallVoid(con_field_map, "set_prop", psz_alias_name, (LONG)position);
                   result = TRUE;
                }
 
@@ -430,8 +432,8 @@ namespace result_rows_ns
    {
       TXppParamList xpp(pl, 3);
       ContainerHandle Self = xpp[1]->con();
-      DWORD row_pos = xpp[2]->GetLong();
-      DWORD col_count = _conGetNLMember(Self, "col_count");
+      DWORD row_pos = (DWORD)xpp[2]->GetLong();
+      DWORD col_count = (DWORD)_conGetNLMember(Self, "col_count");
       ContainerHandle cona_array_values = xpp[3]->con();
 
       ContainerHandle cona_row_set = _conNew(NULLCONTAINER);
@@ -448,7 +450,7 @@ namespace result_rows_ns
          for (DWORD dw = 0; dw <= col_count; dw++) { buffer[dw] = '0'; }
          ContainerHandle con_changed_flag_string = _conPutCL(NULLCONTAINER, buffer, col_count + 1);
          _xfree((void*)buffer); buffer = 0;
-         _conArrayPut(cona_metadata, con_changed_flag_string, result_rows_ns::meta_pos_e::changed , 0);
+         _conArrayPut(cona_metadata, con_changed_flag_string, result_rows_ns::meta_pos_e::changed, 0);
          _conRelease(con_changed_flag_string);
       }
       // -----  metadata[2] := .F. ; metadata[2] := .F. ; 
@@ -470,8 +472,8 @@ namespace result_rows_ns
    {
       TXppParamList xpp(pl, 2);
       ContainerHandle Self = xpp[1]->con();
-      DWORD col_count = _conGetNLMember(Self, "col_count");
-      DWORD row_count = _conGetNLMember(Self, "row_count");
+      DWORD col_count = (DWORD)_conGetNLMember(Self, "col_count");
+      DWORD row_count = (DWORD)_conGetNLMember(Self, "row_count");
       DWORD flags = xpp[2]->GetDWord();
 
       ContainerHandle cona_row_set = _conNew(NULLCONTAINER);
@@ -499,7 +501,7 @@ namespace result_rows_ns
             _conGetMember(Self, "blank_row", con_ghost);
             for (DWORD fp = 1; fp <= col_count; fp++)
             {
-               if( _conArrayGet(con_ghost,con_tmp,fp,0) )
+               if (_conArrayGet(con_ghost, con_tmp, fp, 0))
                {
                   _conArrayPut(cona_array_values, con_tmp, fp, 0);
                }
@@ -530,7 +532,7 @@ namespace result_rows_ns
          _conArrayPut(cona_metadata, con_bool, meta_pos_e::deleted, 0);
          _conPutL(con_bool, TRUE);
          _conArrayPut(cona_metadata, con_bool, meta_pos_e::new_row, 0);
-         _conRelease(con_bool); con_bool= NULLCONTAINER;
+         _conRelease(con_bool); con_bool = NULLCONTAINER;
       }
       // s:row_set[row_pos][1] : = __anew(ChrR(48, s:col_count + 1), .F., .F., NIL) "
       _conArrayPut(cona_row_set, cona_metadata, row_count, 1, 0);
@@ -543,7 +545,7 @@ namespace result_rows_ns
    {
       TXppParamList xpp(pl, 2);
       ContainerHandle Self = xpp[1]->con();
-      DWORD col_count = _conGetNLMember(Self, "col_count");
+      DWORD col_count = (DWORD)_conGetNLMember(Self, "col_count");
       ContainerHandle con_field_object = _get_field_object(Self, xpp[2]->con(), col_count);
       if (con_field_object)
       {
@@ -556,7 +558,7 @@ namespace result_rows_ns
    {
       TXppParamList xpp(pl, 2);
       ContainerHandle Self = xpp[1]->con();
-      DWORD col_count = _conGetNLMember(Self, "col_count");
+      DWORD col_count = (DWORD)_conGetNLMember(Self, "col_count");
       DWORD col_pos = _get_col_position(Self, xpp[2]->con(), col_count);
       xpp[0]->PutDWord(col_pos);
    }
@@ -567,13 +569,13 @@ namespace result_rows_ns
       TXppParamList xpp(pl, 2);
       ContainerHandle Self = xpp[1]->con();
 
-      if (xpp[2]->CheckType( XPP_NUMERIC | XPP_UNDEF) && (xpp[2]->GetLong() == 0 ) )
+      if (xpp[2]->CheckType(XPP_NUMERIC | XPP_UNDEF) && (xpp[2]->GetLong() == 0))
       {
          _conGetMember(Self, "fields", xpp[0]->con());
       }
       else
       {
-         DWORD col_count = _conGetNLMember(Self, "col_count");
+         DWORD col_count = (DWORD)_conGetNLMember(Self, "col_count");
          _get_field_object(Self, xpp[2]->con(), col_count, xpp[0]->con());
       }
    }
@@ -583,8 +585,8 @@ namespace result_rows_ns
    {
       TXppParamList xpp(pl, 1);
       ContainerHandle Self = xpp[1]->con();
-      DWORD row_count = _conGetNLMember(Self, "row_count");
-      DWORD row_pos = (row_count > 0 ? 1 : 0);
+      DWORD row_count = (DWORD)_conGetNLMember(Self, "row_count");
+      DWORD row_pos = (DWORD)(row_count > 0 ? 1 : 0);
       _conSetNLMember(Self, "row_pos", (LONG)row_pos);
 
    }
@@ -594,7 +596,7 @@ namespace result_rows_ns
    {
       TXppParamList xpp(pl, 1);
       ContainerHandle Self = xpp[1]->con();
-      DWORD row_count = _conGetNLMember(Self, "row_count");
+      DWORD row_count = (DWORD)_conGetNLMember(Self, "row_count");
       DWORD row_pos = row_count;
       _conSetNLMember(Self, "row_pos", (LONG)row_pos);
    }
@@ -672,7 +674,7 @@ namespace result_rows_ns
    {
       TXppParamList xpp(pl, 7);
       ContainerHandle Self = xpp[1]->con();
-      DWORD col_count = _conGetNLMember(Self, "col_count");
+      DWORD col_count = (DWORD)_conGetNLMember(Self, "col_count");
       DWORD col_pos = _get_col_position(Self, xpp[2]->con(), col_count);
       ContainerHandle con_value = xpp[3]->con();
       char ch_value_type = _xbase_numeric_type_to_xbase_char_valtype(xpp[3]->GetType());
@@ -755,14 +757,14 @@ namespace result_rows_ns
    {
       TXppParamList xpp(pl, 4);
       ContainerHandle Self = xpp[1]->con();
-      DWORD col_count = _conGetNLMember(Self, "col_count");
+      DWORD col_count = (DWORD)_conGetNLMember(Self, "col_count");
       DWORD col_pos = _get_col_position(Self, xpp[2]->con(), col_count);
       BOOL  lError = (col_pos || xpp[2]->CheckType(XPP_UNDEF)) ? FALSE : !(xpp[2]->CheckType(XPP_NUMERIC) && xpp[2]->GetLong() == 0);
       BOOL lGhost = 0;
       xpp[3]->PutBool(lError);
-      if(!lError)
+      if (!lError)
       {
-         __set_get_row_flags(xpp,0,meta_pos_e::changed, meta_action_e::get,lGhost,col_pos);
+         __set_get_row_flags(xpp, 0, meta_pos_e::changed, meta_action_e::get, lGhost, col_pos);
       }
       xpp[4]->PutBool(lGhost);
    }
@@ -772,7 +774,7 @@ namespace result_rows_ns
    {
       TXppParamList xpp(pl, 2);
       BOOL lGhost = 0;
-      __set_get_row_flags(xpp, TRUE, meta_pos_e::deleted, meta_action_e::set , lGhost);
+      __set_get_row_flags(xpp, TRUE, meta_pos_e::deleted, meta_action_e::set, lGhost);
       xpp[2]->PutBool(lGhost);
    }
    // ------------------------------------------------------------------------------------------------------------------------------------------
@@ -804,7 +806,7 @@ namespace result_rows_ns
    }
    // ------------------------------------------------------------------------------------------------------------------------------------------
    // remove_row_from_rowset( s , @lGhost ) 
-   void remove_row_from_rowset(XppParamList pl) 
+   void remove_row_from_rowset(XppParamList pl)
    {
       TXppParamList xpp(pl, 2);
       ContainerHandle Self = xpp[1]->con();
@@ -815,7 +817,7 @@ namespace result_rows_ns
       {
          ContainerHandle cona_row_set = _conNew(NULLCONTAINER);
          _conGetMember(Self, "row_set", cona_row_set);
-         _conArrayDelA(cona_row_set, row_pos);
+         _conArrayDelA(cona_row_set, (ULONG)row_pos);
          row_count--;
          _conSetNLMember(Self, "row_count", (LONG)row_count);
          if (row_pos > row_count)

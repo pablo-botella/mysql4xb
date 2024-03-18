@@ -6,6 +6,9 @@
 #pragma once
 // -----------------------------------------------------------------------------------------------------------------
 
+#pragma warning( disable:  5045 4711)
+#pragma warning( push)
+#pragma warning( disable:  4265 4365 4668 4820 5039  )
 #include <ot4xb_api.h>
 
 #ifdef _MYSQL4XB_API_
@@ -14,7 +17,10 @@
 #else
 #define MYSQL4XB_API __declspec(dllimport)
 #endif
+
 #include <mysql.h>
+#pragma warning( pop)
+
 enum class mysqlxb_global_flags_enum : DWORD
 {
    tiny_to_bool,

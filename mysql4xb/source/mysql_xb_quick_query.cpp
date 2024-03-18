@@ -60,7 +60,7 @@ ContainerHandle mysql_xb_quick_query_sqltype_to_xbase_blank_value(ContainerHandl
       }
       case MYSQL_TYPE_NEWDECIMAL: case MYSQL_TYPE_DECIMAL:
       {
-         return _conPutNDF(con_value, 0.00, field.max_length, field.decimals);
+         return _conPutNDF(con_value, 0.00, (LONG)  field.max_length, (LONG) field.decimals);
 
       }
       case MYSQL_TYPE_LONGLONG: case MYSQL_TYPE_INT24: case MYSQL_TYPE_LONG: case MYSQL_TYPE_SHORT:
@@ -145,7 +145,7 @@ ContainerHandle mysql_xb_quick_query_create_field_object_container_handle(MYSQL_
 
    _conCallMethodPa(con_field_object, "new", 1, &class_object);
 
-   con_value = _conPutNL(con_value, field_pos + 1);
+   con_value = _conPutNL(con_value, (LONG) (field_pos + 1) );
    _conSetMember(con_field_object, "field_pos", con_value);
 
    con_value = _conPutCL(con_value, field.name, field.name_length);
@@ -163,19 +163,19 @@ ContainerHandle mysql_xb_quick_query_create_field_object_container_handle(MYSQL_
    con_value = _conPutCL(con_value, field.catalog, field.catalog_length);
    _conSetMember(con_field_object, "catalog", con_value);
 
-   con_value = _conPutNL(con_value, field.length);
+   con_value = _conPutNL(con_value, (LONG)  field.length);
    _conSetMember(con_field_object, "length", con_value);
 
-   con_value = _conPutNL(con_value, field.max_length);
+   con_value = _conPutNL(con_value, (LONG) field.max_length);
    _conSetMember(con_field_object, "max_length", con_value);
 
-   con_value = _conPutNL(con_value, field.flags);
+   con_value = _conPutNL(con_value, (LONG) field.flags);
    _conSetMember(con_field_object, "flags", con_value);
 
-   con_value = _conPutNL(con_value, field.decimals);
+   con_value = _conPutNL(con_value, (LONG) field.decimals);
    _conSetMember(con_field_object, "decimals", con_value);
 
-   con_value = _conPutNL(con_value, field.charsetnr);
+   con_value = _conPutNL(con_value, (LONG) field.charsetnr);
    _conSetMember(con_field_object, "charsetnr", con_value);
 
    con_value = _conPutNL(con_value, field.type);
@@ -229,8 +229,8 @@ void __cdecl mysql_xb_quick_query(XppParamList pl)
             if (result)
             {
 
-               int field_count = mysql_num_fields(result);
-               int row_count = mysql_num_rows(result) & 0xFFFFFFFF;
+               int field_count = (int)  mysql_num_fields(result);
+               int row_count = (int) (mysql_num_rows(result) & 0xFFFFFFFF);
                int field_pos;
                int row_pos;
 
@@ -267,7 +267,7 @@ void __cdecl mysql_xb_quick_query(XppParamList pl)
                {
                   for (field_pos = 0; field_pos < field_count; field_pos++)
                   {
-                     ContainerHandle con_field_object = mysql_xb_quick_query_create_field_object_container_handle(fields[field_pos], field_pos, con_fld_class_object);
+                     ContainerHandle con_field_object = mysql_xb_quick_query_create_field_object_container_handle(fields[field_pos], (DWORD) field_pos, con_fld_class_object);
                      ContainerHandle con_result = _conNew(NULLCONTAINER);
                      ContainerHandle con_params[] = { con_rows_object , con_field_object };
                      _conCallMethodPa(con_result, "__set_field_definition", 2, con_params);
@@ -311,8 +311,8 @@ void __cdecl mysql_xb_quick_query(XppParamList pl)
                                  {
                                     char buffer[0xFF + 1] = { 0 };
                                     memcpy_s((LPBYTE)buffer, sizeof(buffer) - 1, (LPBYTE)row[field_pos], row_lengths[field_pos]);
-                                    double value = atol(buffer);
-                                    con_value = _conPutNDF(con_value, value, fields[field_pos].max_length, fields[field_pos].decimals);
+                                    double value = atof(buffer);
+                                    con_value = _conPutNDF(con_value, value , (LONG) fields[field_pos].max_length, (LONG) fields[field_pos].decimals);
 
 
 
@@ -349,7 +349,7 @@ void __cdecl mysql_xb_quick_query(XppParamList pl)
                                  {
                                     char buffer[0xFF + 1] = { 0 };
                                     memcpy_s((LPBYTE)buffer, sizeof(buffer) - 1, (LPBYTE)row[field_pos], row_lengths[field_pos]);
-                                    double value = atol(buffer);
+                                    double value = atof(buffer);
                                     con_value = _conPutND(con_value, value);
                                     break;
                                  }
@@ -416,7 +416,7 @@ void __cdecl mysql_xb_quick_query(XppParamList pl)
                         if (cona_row)
                         {
                            ContainerHandle con_result = _conNew(NULLCONTAINER);
-                           ContainerHandle con_row_pos = _conPutNL(NULLCONTAINER, (ULONG)row_pos + 1);
+                           ContainerHandle con_row_pos = _conPutNL(NULLCONTAINER, row_pos + 1);
                            ContainerHandle con_params[] = { con_rows_object , con_row_pos, cona_row };
                            _conCallMethodPa(con_result, "__init_empty_row", 3, con_params);
                            _conRelease(con_row_pos); con_row_pos = NULLCONTAINER;
