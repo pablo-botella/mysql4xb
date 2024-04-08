@@ -110,6 +110,8 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
       pc->MethodCB("set_prop", "{|s,k,v| s:m_props:set_prop( k,v) }");
 
       // -------------------
+      pc->ClassProperty_cbbs("version", "{|| \"%s\" }", MYSQL4XB_VERSION_STRING);
+      // -------------------
       pc->Method_cbbs("init", "{|s,flags| "
          "  s:m_resultset_class_object := MYSQL4XB_RESULTSET_T() "
          ", s:m_result_field_class_object := MYSQL4XB_RESULT_FIELD_T()  "
@@ -213,8 +215,8 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
       pc->Method_cbbs("connect", "{|s,host,user,pwd,db,port,sk,flags| "
          " s:m_last_connect_result := XbFpCall(%i,s:m_mysql,host,user,pwd,db,port,sk,nOr(flags, s:m_mysql4xb_flags) )}", mysql_xb_real_connect); // ::connect( host,user,pwd,db,port,unix_socket,flags) -> lOk
       
-      pc->Method_cbbs("query", "{|s,sql|  XbFpCall(%i,s:m_mysql,sql" // 1 , 2 
-         ",s:m_resultset_class_object" // 3
+      pc->Method_cbbs("query", "{|s,sql,rs_co|  XbFpCall(%i,s:m_mysql,sql" // 1 , 2 
+         ",__vdef(rs_co,s:m_resultset_class_object)" // 3
          ",s:m_result_rows_class_object" // 4
          ",s:m_result_field_class_object" // 5
          ",s)}", mysql_xb_quick_query); // mysql_xb_quick_query(1pMysql,2sql,3rs_co,4 rows_co , 5 fld_co, 6 self) // ::exec( sql ) -> resulset | NIL
