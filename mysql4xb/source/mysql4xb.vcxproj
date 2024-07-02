@@ -185,11 +185,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="mysql4xb_resulset_key_filter.h" />
     <ClInclude Include="mysql4xb_resultset_rows_t.h" />
     <ClInclude Include="mysql4xb_api.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mysql4xb.cpp" />
+    <ClCompile Include="mysql4xb_resulset_key_filter.cpp" />
     <ClCompile Include="mysql_xb_functions.cpp" />
     <ClCompile Include="mysql_xb_quick_query.cpp" />
     <ClCompile Include="mysql4xb_resultset_t.cpp" />

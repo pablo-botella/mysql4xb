@@ -18,9 +18,15 @@ _XPP_REG_FUN_(MYSQL4XB_RESULT_ROWS_T)
       pc->Var("col_count");
       pc->Var("throw_type_error");
       pc->Var("props");
+      // -------------------
+      pc->Var("row_map");
+      pc->Var("row_map_pos");
+      // ------------------
+
+
 
       // -------------------
-      pc->MethodCB("truncate", "{|s | s:row_set := Array(0) , s:row_pos := 0 , s:row_count := 0 , s}");
+      pc->MethodCB("truncate", "{|s |s:row_map := NIL , s:row_set := Array(0) , s:row_pos := 0 , s:row_count := 0 , s}");
       // -------------------
       pc->Method_cbbs("init", "{|s,col_count , row_count | XbFpCall( %i ,s,col_count , row_count ) }", result_rows_ns::init);
       // -------------------
@@ -36,20 +42,25 @@ _XPP_REG_FUN_(MYSQL4XB_RESULT_ROWS_T)
       pc->Method_cbbs("get_col_name", "{|s,k| XbFpCall(%i,s,k) }", result_rows_ns::get_col_name);
       // -------------------
       pc->Method_cbbs("get_col_info", "{|s,k| XbFpCall(%i,s,k) }", result_rows_ns::get_col_info);
+      pc->Method_cbbs("peek_col_info", "{|s,col,k,def| __vpeek(XbFpCall(%i,s,col),k,def) }", result_rows_ns::get_col_info);
       // -------------------
       pc->Method_cbbs("go_top", "{|s| XbFpCall(%i,s) }", result_rows_ns::go_top);
       pc->Method_cbbs("go_bottom", "{|s| XbFpCall(%i,s) }", result_rows_ns::go_bottom);
       // -------------------
       pc->Method_cbbs("skip", "{|s,n| XbFpCall(%i,s,n) }", result_rows_ns::skip);
       // -------------------
+      pc->Method_cbbs("set_map_pos", "{|s,n| XbFpCall(%i,s,n) }", result_rows_ns::set_map_pos);
       pc->Method_cbbs("set_row_pos", "{|s,n| XbFpCall(%i,s,n) }", result_rows_ns::set_row_pos);
       // -------------------
-      pc->Method_cbbs("get_row_pos", "{|s| s:row_pos }");
-      pc->Method_cbbs("get_row_count", "{|s,n| s:row_count }");
+      pc->MethodCB("get_row_pos", "{|s| s:row_pos }");
+      pc->MethodCB("get_row_count", "{|s,n| s:row_count }");
       // -------------------
-      pc->Method_cbbs("eof", "{|s|  s:row_pos > s:row_count .or. s:row_pos < 1 }");
-      pc->Method_cbbs("bof", "{|s|  s:row_pos < 1 }");
-      pc->Method_cbbs("get_col_count", "{|s| s:col_count }");
+      pc->MethodCB("get_map_pos", "{|s| s:row_map_pos }");
+      pc->MethodCB("get_map_count", "{|s,n| nRShift(len(__vstr(s:row_map,''),2)  }");
+      // -------------------
+      pc->MethodCB("eof", "{|s|  s:row_pos > s:row_count .or. s:row_pos < 1 }");
+      pc->MethodCB("bof", "{|s|  s:row_pos < 1 }");
+      pc->MethodCB("get_col_count", "{|s| s:col_count }");
       // -------------------
       pc->Method_cbbs("escape_cell_value", "{|s,n,lError,lGhost|  XbFpCall(%i,s,n,@lError,@lGhost) }", result_rows_ns::escape_cell_value);
       // -------------------
@@ -135,13 +146,13 @@ namespace result_rows_ns
    {
       switch (xbase_numeric_type & 0xFF)
       {
-      case XPP_CHARACTER: return 'C';
-      case XPP_NUMERIC: return 'N';
-      case XPP_DATE: return 'D';
-      case XPP_LOGICAL: return 'L';
-      case XPP_ARRAY: return 'A';
-      case XPP_OBJECT: return 'O';
-      default: return 'U';
+         case XPP_CHARACTER: return 'C';
+         case XPP_NUMERIC: return 'N';
+         case XPP_DATE: return 'D';
+         case XPP_LOGICAL: return 'L';
+         case XPP_ARRAY: return 'A';
+         case XPP_OBJECT: return 'O';
+         default: return 'U';
       }
    }
    // -----------------------------------------------------------------------------------------------------------------------------
@@ -185,28 +196,28 @@ namespace result_rows_ns
          _conType(con_k, &type);
          switch (type & 0xFF)
          {
-         case XPP_CHARACTER:
-         {
-            char name[128] = { 0 };
-            DWORD dw = 0;
-            _conGetCL(con_k, &dw, name, sizeof(name) - 1);
-            if (dw)
+            case XPP_CHARACTER:
             {
-               ContainerHandle con_field_map = _conNew(NULLCONTAINER);
-               _conGetMember(Self, "field_map", con_field_map);
-               if (_conCheckType(con_field_map, XPP_OBJECT))
+               char name[128] = { 0 };
+               DWORD dw = 0;
+               _conGetCL(con_k, &dw, name, sizeof(name) - 1);
+               if (dw)
                {
-                  position = (DWORD)_conMCallLong(con_field_map, "get_prop", name);
+                  ContainerHandle con_field_map = _conNew(NULLCONTAINER);
+                  _conGetMember(Self, "field_map", con_field_map);
+                  if (_conCheckType(con_field_map, XPP_OBJECT))
+                  {
+                     position = (DWORD)_conMCallLong(con_field_map, "get_prop", name);
+                  }
+                  _conRelease(con_field_map); con_field_map = NULLCONTAINER;
                }
-               _conRelease(con_field_map); con_field_map = NULLCONTAINER;
+               break;
             }
-            break;
-         }
-         case XPP_NUMERIC:
-         {
-            _conGetNL(con_k, (LONG*)&position);
-            break;
-         }
+            case XPP_NUMERIC:
+            {
+               _conGetNL(con_k, (LONG*)&position);
+               break;
+            }
          }
       }
       if (position > col_count)
@@ -233,44 +244,44 @@ namespace result_rows_ns
       {
          ContainerHandle cona_row_set = _conNew(NULLCONTAINER);
          _conGetMember(Self, "row_set", cona_row_set);
-         switch ((int) meta_pos)
+         switch ((int)meta_pos)
          {
-         case (int) meta_pos_e::changed:
-         {
-            if (meta_action == meta_action_e::get) // will support only get operation here
+            case (int)meta_pos_e::changed:
             {
-               ContainerHandle con_change_flags = _conNew(NULLCONTAINER);
-               _conArrayGet(cona_row_set, con_change_flags, row_pos, 1, 1, 0);
-
-               DWORD cb_flags = 0;
-               LPSTR ps_flags = 0;
-               if (_conRLockC(con_change_flags, &ps_flags, &cb_flags) == 0)
+               if (meta_action == meta_action_e::get) // will support only get operation here
                {
-                  if (col_pos < cb_flags)
+                  ContainerHandle con_change_flags = _conNew(NULLCONTAINER);
+                  _conArrayGet(cona_row_set, con_change_flags, row_pos, 1, 1, 0);
+
+                  DWORD cb_flags = 0;
+                  LPSTR ps_flags = 0;
+                  if (_conRLockC(con_change_flags, &ps_flags, &cb_flags) == 0)
                   {
-                     xpp[0]->PutBool(ps_flags[col_pos] == '1' ? TRUE : FALSE);
+                     if (col_pos < cb_flags)
+                     {
+                        xpp[0]->PutBool(ps_flags[col_pos] == '1' ? TRUE : FALSE);
+                     }
+                     _conUnlockC(con_change_flags);
                   }
-                  _conUnlockC(con_change_flags);
+                  ps_flags = 0;
+                  _conRelease(con_change_flags); con_change_flags = NULLCONTAINER;
                }
-               ps_flags = 0;
-               _conRelease(con_change_flags); con_change_flags = NULLCONTAINER;
+               break;
             }
-            break;
-         }
-         case (int) meta_pos_e::new_row:
-         case (int) meta_pos_e::deleted:
-         {
-            if (meta_action == meta_action_e::set)
+            case (int)meta_pos_e::new_row:
+            case (int)meta_pos_e::deleted:
             {
-               _conArrayPutL(cona_row_set, lOnOff, row_pos, 1, meta_pos, 0);
+               if (meta_action == meta_action_e::set)
+               {
+                  _conArrayPutL(cona_row_set, lOnOff, row_pos, 1, meta_pos, 0);
+               }
+               else
+               {
+                  _conArrayGet(cona_row_set, xpp[0]->con(), row_pos, 1, meta_pos, 0);
+               }
+               break;
             }
-            else
-            {
-               _conArrayGet(cona_row_set, xpp[0]->con(), row_pos, 1, meta_pos, 0);
-            }
-            break;
-         }
-         
+
          }
          _conRelease(cona_row_set); cona_row_set = NULLCONTAINER;
       }
@@ -341,6 +352,13 @@ namespace result_rows_ns
          _conSetMember(Self, "props", cono_props);
          _conRelease(cono_props); cono_props = NULLCONTAINER;
       }
+
+      // ---
+
+
+      _conSetNILMember(Self, "row_map");
+      _conSetNLMember(Self, "row_map_pos", 0);
+
 
 
       xpp[0]->Put(Self);
@@ -580,15 +598,61 @@ namespace result_rows_ns
       }
    }
    // -----------------------------------------------------------------------------------------------------------------------------------------
+   static void __set_pos_by_map(ContainerHandle Self, LONG & map_pos, LONG map_count, LONG* map)
+   {
+      LONG row_pos = 0;
+
+      map_pos = (map_pos > map_count) ? map_pos = map_count + 1 : (map_pos < 1 ? 0 : map_pos);
+      _conSetNLMember(Self, "row_map_pos", (LONG)map_pos);
+      if (map_pos > 0)
+      {
+         LONG  row_count = _conGetNLMember(Self, "row_count");
+         if (map_pos > map_count)
+         {
+            row_pos = row_count + 1;
+         }
+         else
+         {
+            row_pos = map[map_pos - 1];
+            row_pos = (row_pos > row_count) ? row_pos = row_count + 1 : (row_pos < 1 ? 0 : row_pos);
+         }
+      }
+      _conSetNLMember(Self, "row_pos", (LONG)row_pos);
+   }
+
+   // -----------------------------------------------------------------------------------------------------------------------------------------
+   static void __go_top_or_bottom_with_map(ContainerHandle Self, ContainerHandle con_map , BOOL bTop)
+   {
+      DWORD cb = 0;
+      LONG* map;
+      if (!_conRLockC(con_map, (LPSTR*)((void*)&map), &cb))
+      {
+         LONG map_count = (LONG)(cb >> 2);
+         LONG map_pos = ( bTop ? 1 : map_count) ;
+         __set_pos_by_map(Self, map_pos, map_count, map);
+         _conUnlockC(con_map); map = 0;
+      }
+      _conRelease(con_map);
+      con_map = NULLCONTAINER;
+   }
+
+   // -----------------------------------------------------------------------------------------------------------------------------------------
    // go_top() -> NIL
    void go_top(XppParamList pl)
    {
       TXppParamList xpp(pl, 1);
       ContainerHandle Self = xpp[1]->con();
-      DWORD row_count = (DWORD)_conGetNLMember(Self, "row_count");
-      DWORD row_pos = (DWORD)(row_count > 0 ? 1 : 0);
-      _conSetNLMember(Self, "row_pos", (LONG)row_pos);
-
+      ContainerHandle con_map = _conTMember(Self, "row_map", XPP_CHARACTER);
+      if (con_map)
+      {
+         return __go_top_or_bottom_with_map(Self, con_map, TRUE);
+      }
+      else
+      {
+         DWORD row_count = (DWORD)_conGetNLMember(Self, "row_count");
+         DWORD row_pos = (DWORD)(row_count > 0 ? 1 : 0);
+         _conSetNLMember(Self, "row_pos", (LONG)row_pos);
+      }
    }
    // -----------------------------------------------------------------------------------------------------------------------------------------
    // go_bottom() -> NIL
@@ -596,10 +660,37 @@ namespace result_rows_ns
    {
       TXppParamList xpp(pl, 1);
       ContainerHandle Self = xpp[1]->con();
-      DWORD row_count = (DWORD)_conGetNLMember(Self, "row_count");
-      DWORD row_pos = row_count;
-      _conSetNLMember(Self, "row_pos", (LONG)row_pos);
+      ContainerHandle con_map = _conTMember(Self, "row_map", XPP_CHARACTER);
+      if (con_map)
+      {
+         return __go_top_or_bottom_with_map(Self, con_map, FALSE);
+      }
+      else
+      {
+
+
+         DWORD row_count = (DWORD)_conGetNLMember(Self, "row_count");
+         DWORD row_pos = row_count;
+         _conSetNLMember(Self, "row_pos", (LONG)row_pos);
+      }
    }
+   // -----------------------------------------------------------------------------------------------------------------------------------------
+   static void __skip_with_map(ContainerHandle Self, LONG rows_to_skip, ContainerHandle con_map)
+   {
+      DWORD cb = 0;
+      LONG * map;
+      if (!_conRLockC(con_map, (LPSTR*)((void*)&map), &cb))
+      {
+         LONG map_pos = _conGetNLMember(Self, "row_map_pos");
+         LONG map_count = (LONG) (cb >> 2); 
+         map_pos += rows_to_skip;
+         __set_pos_by_map(Self, map_pos, map_count, map);
+         _conUnlockC(con_map); map = 0;
+      }
+      _conRelease(con_map);
+      con_map = NULLCONTAINER;
+   }
+
    // -----------------------------------------------------------------------------------------------------------------------------------------
    //  skip( rows_to_skip ) 
    void skip(XppParamList pl)
@@ -607,13 +698,20 @@ namespace result_rows_ns
       TXppParamList xpp(pl, 2);
       ContainerHandle Self = xpp[1]->con();
       LONG rows_to_skip = (xpp[2]->CheckType(XPP_NUMERIC) ? xpp[2]->GetLong() : 1);
-      LONG row_pos = _conGetNLMember(Self, "row_pos");
-      LONG row_count = _conGetNLMember(Self, "row_count");
+      ContainerHandle con_map = _conTMember(Self, "row_map", XPP_CHARACTER);
+      if( con_map )
+      {
+         return __skip_with_map(Self, rows_to_skip, con_map);
+      }
+      else
+      {
+         LONG row_count = _conGetNLMember(Self, "row_count");
+         LONG row_pos = _conGetNLMember(Self, "row_pos");
+         row_pos += rows_to_skip;
+         row_pos = (row_pos > row_count) ? row_pos = row_count + 1 : (row_pos < 1 ? 0 : row_pos);
 
-      row_pos += rows_to_skip;
-      row_pos = (row_pos > row_count) ? row_pos = row_count + 1 : (row_pos < 1 ? 0 : row_pos);
-
-      _conSetNLMember(Self, "row_pos", (LONG)row_pos);
+         _conSetNLMember(Self, "row_pos", (LONG)row_pos);
+      }
    }
    // -----------------------------------------------------------------------------------------------------------------------------------------
    // set_row_pos(row_pos)
@@ -626,6 +724,30 @@ namespace result_rows_ns
       LONG row_count = _conGetNLMember(Self, "row_count");
       row_pos = (row_pos > row_count) ? row_pos = row_count + 1 : (row_pos < 1 ? 0 : row_pos);
       _conSetNLMember(Self, "row_pos", (LONG)row_pos);
+   }
+   // -----------------------------------------------------------------------------------------------------------------------------------------
+   void set_map_pos(XppParamList pl)
+   {
+      TXppParamList xpp(pl, 2);
+      ContainerHandle Self = xpp[1]->con();
+      if (xpp[2]->CheckType(XPP_NUMERIC))
+      {
+         LONG map_pos = xpp[2]->GetLong();
+         ContainerHandle con_map = _conTMember(Self, "row_map", XPP_CHARACTER);
+         if (con_map)
+         {
+            DWORD cb = 0;
+            LONG* map = NULL;
+            if (!_conRLockC(con_map, (LPSTR*)((void*)&map), &cb))
+            {
+               LONG map_count = (LONG)(cb >> 2);
+               __set_pos_by_map(Self, map_pos, map_count, map);
+               _conUnlockC(con_map); map = 0;
+            }
+            _conRelease(con_map);
+            con_map = NULLCONTAINER;
+         }
+      }
    }
    // -----------------------------------------------------------------------------------------------------------------------------------------
    // escape_cell_value( s,k,@lError,@lGhost| 
@@ -832,42 +954,3 @@ namespace result_rows_ns
 } // end namespace 
 // ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-/****************************************************************************************************************************************************************************************
-
-
-// -------------------
-pc->MethodCB("escape_cell_value", "{|s,n,lError,lGhost|  n := nOr(n) , lError := ( n > s:col_count .or. n < 1) "
-   ", lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif( lError, NIL , s:fields[n]:escape_value( iif( lGhost , s:blank_row[n] , s:row_set[s:row_pos][2][n] ) )) }");
-// -------------------
-pc->MethodCB("get_cell", "{|s,n,lError,lGhost|  n := nOr(n) , lError := ( n > s:col_count .or. n < 1) "
-   ", lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif( lError, NIL , iif( lGhost , s:blank_row[n] , s:row_set[s:row_pos][2][n] )) }");
-// -------------------
-pc->Method_cbbs("set_cell", "{|s,kn,v,lError,lGhost,lTypeError,lChanged| XbFpCall( %i, s,kn,v,@lError,@lGhost,@lTypeError,@lChanged)}", result_rows_ns::set_cell);
-// ------------------
-pc->MethodCB("row_metadata", "{|s,lError,lGhost|  "
-   " lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lGhost , NIL , s:row_set[s:row_pos][1] ) }");
-// ------------------
-pc->MethodCB("row_changed", "{|s,k,lError,lGhost,n|  n := nOr(iif(k==NIL,0, iif(valtype(k) == 'C',s:field_map:get_prop(k),k))) "
-   " , lError := ( n > s:col_count .or. n < 0 ) "
-   ", lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lError .or. lGhost , .F. , SubStr( s:row_set[s:row_pos][1][1],n+1,1) == '1' ) }");
-// ------------------
-pc->MethodCB("mark_row_to_delete", "{|s,lGhost| lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lGhost , .F. , s:row_set[s:row_pos][1][3] := .T. ) }");
-// ------------------
-pc->MethodCB("unmark_row_to_delete", "{|s,lGhost| lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lGhost , .F. , s:row_set[s:row_pos][1][3] := .F. ) }");
-// ------------------
-pc->MethodCB("is_row_marked_to_delete", "{|s,lGhost| lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lGhost , .F. , s:row_set[s:row_pos][1][3]  ) }");
-// ------------------
-pc->MethodCB("is_new_row", "{|s,lGhost| lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lGhost , .F. , s:row_set[s:row_pos][1][2]  ) }");
-// ------------------
-pc->MethodCB("remove_row_from_rowset", "{|s,lGhost| lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lGhost , .F. , ( adel( s:row_set,s:row_pos)  , s:row_count := s:row_count -1 , asize( s:row_set , s:row_count) )   ) }");
-// ------------------
-****************/

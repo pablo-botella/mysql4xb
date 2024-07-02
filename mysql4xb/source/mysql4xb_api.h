@@ -74,7 +74,13 @@ void __cdecl mysql_xb_field_count(XppParamList pl);
 
 
 
+
+
+
+DWORD __cdecl mysql_xb_quick_query_sqltype_to_xbase_type(enum_field_types mytype);
+
 void __cdecl mysql_xb_quick_query(XppParamList pl);
 
 // ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #include <mysql4xb_resultset_rows_t.h>
+#include <mysql4xb_resulset_key_filter.h>

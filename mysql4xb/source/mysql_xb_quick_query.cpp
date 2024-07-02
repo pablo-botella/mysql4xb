@@ -100,6 +100,43 @@ ContainerHandle mysql_xb_quick_query_sqltype_to_xbase_blank_value(ContainerHandl
 
 }
 // ------------------------------------------------------------------------------------------------------------
+DWORD  __cdecl mysql_xb_quick_query_sqltype_to_xbase_type(enum_field_types mytype)
+{
+   switch (mytype)
+   {
+      case MYSQL_TYPE_TINY:
+      {
+         return (mysqlxb_global_flags[(DWORD)mysqlxb_global_flags_enum::tiny_to_bool] & 0xFF) ? XPP_LOGICAL : XPP_NUMERIC;
+      }
+      case MYSQL_TYPE_NEWDECIMAL: case MYSQL_TYPE_DECIMAL:
+      {
+         return XPP_NUMERIC;
+      }
+      case MYSQL_TYPE_LONGLONG: case MYSQL_TYPE_INT24: case MYSQL_TYPE_LONG: case MYSQL_TYPE_SHORT:
+      {
+         return XPP_NUMERIC;
+      }
+      case MYSQL_TYPE_FLOAT: case MYSQL_TYPE_DOUBLE:
+      {
+         return XPP_NUMERIC;
+      }
+      case MYSQL_TYPE_DATE:
+      {
+         return XPP_DATE;
+      }
+      case MYSQL_TYPE_NULL:
+      case MYSQL_TYPE_TIMESTAMP: case MYSQL_TYPE_TIME: case MYSQL_TYPE_DATETIME: case MYSQL_TYPE_YEAR: case MYSQL_TYPE_NEWDATE:
+      case MYSQL_TYPE_TIMESTAMP2: case MYSQL_TYPE_DATETIME2: case MYSQL_TYPE_TIME2:
+      case MYSQL_TYPE_VARCHAR: case MYSQL_TYPE_BIT: case MYSQL_TYPE_JSON: case MYSQL_TYPE_ENUM: case MYSQL_TYPE_SET:
+      case MYSQL_TYPE_TINY_BLOB: case MYSQL_TYPE_MEDIUM_BLOB: case MYSQL_TYPE_LONG_BLOB: case MYSQL_TYPE_BLOB: case MYSQL_TYPE_VAR_STRING:
+      case MYSQL_TYPE_STRING: case MYSQL_TYPE_GEOMETRY:
+      default: // character as is
+      {
+         return XPP_CHARACTER;
+      }
+   }
+}
+// -------------------------------------------------------------------------------------------------------------
 char __cdecl mysql_xb_quick_query_sqltype_to_xbase_type_letter(enum_field_types mytype)
 {
    switch (mytype)

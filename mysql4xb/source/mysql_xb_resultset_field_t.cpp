@@ -45,6 +45,25 @@ _XPP_REG_FUN_(MYSQL4XB_RESULT_FIELD_T)
       // -------------------
       pc->MethodCB("init", "{|s| s }");
       // -------------------
+      
+      pc->MethodCB("get_field_pos"         , "{|s| s:field_pos }" );
+      pc->MethodCB("get_name"              , "{|s| s:name }" );
+      pc->MethodCB("get_org_name"          , "{|s| s:org_name }" );
+      pc->MethodCB("get_table"             , "{|s| s:table }" );
+      pc->MethodCB("get_db"                , "{|s| s:db }" );
+      pc->MethodCB("get_catalog"           , "{|s| s:catalog }" );
+      pc->MethodCB("get_length"            , "{|s| s:length }" );
+      pc->MethodCB("get_max_length"        , "{|s| s:max_length }" );
+      pc->MethodCB("get_flags"             , "{|s| s:flags }" );
+      pc->MethodCB("get_decimals"          , "{|s| s:decimals }" );
+      pc->MethodCB("get_charsetnr"         , "{|s| s:charsetnr }" );
+      pc->MethodCB("get_type"              , "{|s| s:type }" );
+      pc->MethodCB("get_ot4xb_sql_type"    , "{|s| s:ot4xb_sql_type }" );
+      pc->MethodCB("get_xbase_type"        , "{|s| s:xbase_type }" );
+      pc->MethodCB("get_xbase_empty_value" , "{|s| s:xbase_empty_value }" );
+      pc->MethodCB("get_escape_flags"      , "{|s| s:escape_flags }");
+
+      // -------------------
       conco = pc->Create();
       delete pc;
       if (conco == NULLCONTAINER)

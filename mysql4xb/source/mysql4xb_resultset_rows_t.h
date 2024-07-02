@@ -45,6 +45,8 @@ namespace result_rows_ns
    void skip(XppParamList pl);
 
    void set_row_pos(XppParamList pl);
+   void set_map_pos(XppParamList pl);
+
 
    void escape_cell_value(XppParamList pl);
 
