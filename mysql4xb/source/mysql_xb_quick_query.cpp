@@ -24,7 +24,7 @@ LONG mysql_field_to_ot4xb_sql_type(MYSQL_FIELD & field)
       case MYSQL_TYPE_TIMESTAMP2:  return  (LONG)ot4xb_sql_type::TimeStamp;
       case MYSQL_TYPE_DATETIME2:  return  (LONG)ot4xb_sql_type::DateTime;
       case MYSQL_TYPE_TIME2:  return  (LONG)ot4xb_sql_type::Time;
-      case MYSQL_TYPE_JSON:  return  (LONG)ot4xb_sql_type::Char;
+      case MYSQL_TYPE_JSON:  return  (LONG)ot4xb_sql_type::Json;
       case MYSQL_TYPE_NEWDECIMAL:  return  (LONG)ot4xb_sql_type::Decimal;
       case MYSQL_TYPE_ENUM:  return  (LONG)ot4xb_sql_type::Enum;
       case MYSQL_TYPE_SET:  return  (LONG)ot4xb_sql_type::Set;
@@ -50,7 +50,7 @@ ContainerHandle mysql_xb_quick_query_sqltype_to_xbase_blank_value(ContainerHandl
       {
          if (mysqlxb_global_flags[(DWORD)mysqlxb_global_flags_enum::tiny_to_bool] & 0xFF)
          {
-            return _conPutL(con_value, 1);
+            return _conPutL(con_value, 0);
          }
          else
          {
@@ -124,10 +124,14 @@ char __cdecl mysql_xb_quick_query_sqltype_to_xbase_type_letter(enum_field_types 
       {
          return 'D';
       }
+      case MYSQL_TYPE_JSON:
+      {
+         return 'J';
+      }
       case MYSQL_TYPE_NULL:
       case MYSQL_TYPE_TIMESTAMP: case MYSQL_TYPE_TIME: case MYSQL_TYPE_DATETIME: case MYSQL_TYPE_YEAR: case MYSQL_TYPE_NEWDATE:
       case MYSQL_TYPE_TIMESTAMP2: case MYSQL_TYPE_DATETIME2: case MYSQL_TYPE_TIME2:
-      case MYSQL_TYPE_VARCHAR: case MYSQL_TYPE_BIT: case MYSQL_TYPE_JSON: case MYSQL_TYPE_ENUM: case MYSQL_TYPE_SET:
+      case MYSQL_TYPE_VARCHAR: case MYSQL_TYPE_BIT:  case MYSQL_TYPE_ENUM: case MYSQL_TYPE_SET:
       case MYSQL_TYPE_TINY_BLOB: case MYSQL_TYPE_MEDIUM_BLOB: case MYSQL_TYPE_LONG_BLOB: case MYSQL_TYPE_BLOB: case MYSQL_TYPE_VAR_STRING:
       case MYSQL_TYPE_STRING: case MYSQL_TYPE_GEOMETRY:
       default: // character as is
@@ -368,6 +372,22 @@ void __cdecl mysql_xb_quick_query(XppParamList pl)
                                     con_value = _conPutDS(con_value, buffer);
                                     break;
                                  }
+                                 case MYSQL_TYPE_JSON:
+                                 {
+                                    int utf8_cb = 0;
+                                    LPSTR uft8_str = mb2mb( row[ field_pos ], (int) row_lengths[ field_pos ], &utf8_cb, 0, 65001, 0, 0 );
+                                    ContainerHandle jso = json_ns::parse_string_utf8( uft8_str,0,0);
+                                    _xfree( (void*) uft8_str ); uft8_str = 0;
+                                    con_value = _conPut( con_value, jso );
+                                    if( jso )
+                                    {
+                                       _conRelease( jso );
+                                       jso = NULLCONTAINER;
+                                    }
+                                    break;
+                                 
+                                 }
+
                                  case MYSQL_TYPE_NULL:
                                  case MYSQL_TYPE_TIMESTAMP:
                                  case MYSQL_TYPE_TIME:
@@ -379,7 +399,7 @@ void __cdecl mysql_xb_quick_query(XppParamList pl)
                                  case MYSQL_TYPE_TIMESTAMP2:
                                  case MYSQL_TYPE_DATETIME2:
                                  case MYSQL_TYPE_TIME2:
-                                 case MYSQL_TYPE_JSON:
+
 
                                  case MYSQL_TYPE_ENUM:
                                  case MYSQL_TYPE_SET:

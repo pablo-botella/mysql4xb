@@ -698,7 +698,14 @@ namespace result_rows_ns
             char expected_type[2] = { 0 };
             _conArrayGetCL(cona_xbase_row_types, expected_type, sizeof(expected_type), col_pos, 0);
             _conRelease(cona_xbase_row_types); cona_xbase_row_types = NULLCONTAINER;
-            lTypeError = (ch_value_type == expected_type[0]) ? FALSE : TRUE;
+            if( expected_type[0] == 'J' )
+            { 
+               lTypeError = FALSE;
+            }
+            else
+            {
+               lTypeError = ( ch_value_type == expected_type[ 0 ] ) ? FALSE : TRUE;
+            }
             if (lTypeError)
             {
                lStopBecauseTypeError = _conGetLMember(Self, "throw_type_error");
@@ -828,46 +835,6 @@ namespace result_rows_ns
       }
    }
    // ------------------------------------------------------------------------------------------------------------------------------------------
-
-} // end namespace 
+   } // end namespace 
 // ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-/****************************************************************************************************************************************************************************************
-
-
-// -------------------
-pc->MethodCB("escape_cell_value", "{|s,n,lError,lGhost|  n := nOr(n) , lError := ( n > s:col_count .or. n < 1) "
-   ", lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif( lError, NIL , s:fields[n]:escape_value( iif( lGhost , s:blank_row[n] , s:row_set[s:row_pos][2][n] ) )) }");
-// -------------------
-pc->MethodCB("get_cell", "{|s,n,lError,lGhost|  n := nOr(n) , lError := ( n > s:col_count .or. n < 1) "
-   ", lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif( lError, NIL , iif( lGhost , s:blank_row[n] , s:row_set[s:row_pos][2][n] )) }");
-// -------------------
-pc->Method_cbbs("set_cell", "{|s,kn,v,lError,lGhost,lTypeError,lChanged| XbFpCall( %i, s,kn,v,@lError,@lGhost,@lTypeError,@lChanged)}", result_rows_ns::set_cell);
-// ------------------
-pc->MethodCB("row_metadata", "{|s,lError,lGhost|  "
-   " lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lGhost , NIL , s:row_set[s:row_pos][1] ) }");
-// ------------------
-pc->MethodCB("row_changed", "{|s,k,lError,lGhost,n|  n := nOr(iif(k==NIL,0, iif(valtype(k) == 'C',s:field_map:get_prop(k),k))) "
-   " , lError := ( n > s:col_count .or. n < 0 ) "
-   ", lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lError .or. lGhost , .F. , SubStr( s:row_set[s:row_pos][1][1],n+1,1) == '1' ) }");
-// ------------------
-pc->MethodCB("mark_row_to_delete", "{|s,lGhost| lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lGhost , .F. , s:row_set[s:row_pos][1][3] := .T. ) }");
-// ------------------
-pc->MethodCB("unmark_row_to_delete", "{|s,lGhost| lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lGhost , .F. , s:row_set[s:row_pos][1][3] := .F. ) }");
-// ------------------
-pc->MethodCB("is_row_marked_to_delete", "{|s,lGhost| lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lGhost , .F. , s:row_set[s:row_pos][1][3]  ) }");
-// ------------------
-pc->MethodCB("is_new_row", "{|s,lGhost| lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lGhost , .F. , s:row_set[s:row_pos][1][2]  ) }");
-// ------------------
-pc->MethodCB("remove_row_from_rowset", "{|s,lGhost| lGhost := (s:row_pos > s:row_count .or. s:row_pos < 1)"
-   ", iif(  lGhost , .F. , ( adel( s:row_set,s:row_pos)  , s:row_count := s:row_count -1 , asize( s:row_set , s:row_count) )   ) }");
-// ------------------
-****************/
