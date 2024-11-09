@@ -215,11 +215,11 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
       pc->Method_cbbs("connect", "{|s,host,user,pwd,db,port,sk,flags| "
          " s:m_last_connect_result := XbFpCall(%i,s:m_mysql,host,user,pwd,db,port,sk,nOr(flags, s:m_mysql4xb_flags) )}", mysql_xb_real_connect); // ::connect( host,user,pwd,db,port,unix_socket,flags) -> lOk
       
-      pc->Method_cbbs("query", "{|s,sql,rs_co|  XbFpCall(%i,s:m_mysql,sql" // 1 , 2 
+      pc->Method_cbbs("query", "{|s,sql,rs_co,flags|  XbFpCall(%i,s:m_mysql,sql" // 1 , 2 
          ",__vdef(rs_co,s:m_resultset_class_object)" // 3
          ",s:m_result_rows_class_object" // 4
          ",s:m_result_field_class_object" // 5
-         ",s)}", mysql_xb_quick_query); // mysql_xb_quick_query(1pMysql,2sql,3rs_co,4 rows_co , 5 fld_co, 6 self) // ::exec( sql ) -> resulset | NIL
+         ",s,flags)}", mysql_xb_quick_query); // mysql_xb_quick_query(1pMysql,2sql,3rs_co,4 rows_co , 5 fld_co, 6 self, 7 flags) // ::exec( sql ) -> resulset | NIL
       
       pc->Method_cbbs("field_count", "{|s| nFpCall( %i , s ) }",mysql_xb_field_count );
       pc->Method_cbbs("last_insert_id","{|s|  XbFpCall(%i,s) }", mysql_xb_last_inserted_id);

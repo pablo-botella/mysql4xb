@@ -210,11 +210,20 @@ ContainerHandle mysql_xb_quick_query_create_field_object_container_handle(MYSQL_
 }
 
 // -------------------------------------------------------------------------------------------------------------
-// mysql_xb_quick_query(1pMysql,2sql,3rs_co,4 rows_co , 5 fld_co , 6 self)
+// mysql_xb_quick_query(1pMysql,2sql,3rs_co,4 rows_co , 5 fld_co , 6 self , 7 flags)
 void __cdecl mysql_xb_quick_query(XppParamList pl)
 {
-   TXppParamList xpp(pl, 6);
+   TXppParamList xpp(pl, 7);
    MYSQL* my = (MYSQL*)xpp[1]->GetDWord();
+   DWORD flags = xpp[ 7 ]->GetDWord();
+   DWORD result_count = 0;
+   if( flags & 0x1000  )
+   {
+      xpp[ 0 ]->PutNewArray( 1, 1 );
+   }
+   
+
+
    if (my)
    {
       DWORD sql_cb = 0;
@@ -237,6 +246,11 @@ void __cdecl mysql_xb_quick_query(XppParamList pl)
                int row_count = (int) (mysql_num_rows(result) & 0xFFFFFFFF);
                int field_pos;
                int row_pos;
+               result_count++;
+               if( flags & 0x1000 )
+               {
+                  xpp[ 0 ]->resize( result_count );
+               }
 
                MYSQL_FIELD* fields = mysql_fetch_fields(result);
                ContainerHandle con_result_class_object = xpp[3]->con();
@@ -452,7 +466,16 @@ void __cdecl mysql_xb_quick_query(XppParamList pl)
                }
                if (con_result_object)
                {
-                  xpp[0]->Put(con_result_object);
+
+                  if( flags & 0x1000 )
+                  {
+                     _conArrayPut( xpp[ 0 ]->con(), con_result_object, result_count, 0 );
+                  }
+                  else
+                  {
+                     xpp[ 0 ]->Put( con_result_object );
+                     
+                  }
                   _conRelease(con_result_object); con_result_object = NULLCONTAINER;
                }
                mysql_free_result(result);
@@ -461,7 +484,20 @@ void __cdecl mysql_xb_quick_query(XppParamList pl)
             {
                if (mysql_field_count(my) == 0)
                {
-                     xpp[0]->PutQWordAsNumeric((LONGLONG) mysql_affected_rows(my));
+                  if( flags & 0x1000 )
+                  {
+                     LONGLONG qw = (LONGLONG) mysql_affected_rows( my );
+                     ContainerHandle con = NULLCONTAINER;
+                     if( qw & 0xFFFFFFFF80000000ll ){con = _conPutND ( con ,  (double) qw );}
+                     else {con = _conPutNL( con,  (LONG) ( qw & 0xFFFFFFFFll ) );}
+                     _conArrayPut( xpp[ 0 ]->con(), con, result_count, 0 );
+                     _conRelease( con );
+                     con = NULLCONTAINER;
+                  }
+                  else
+                  {
+                     xpp[ 0 ]->PutQWordAsNumeric( (LONGLONG) mysql_affected_rows( my ) );
+                  }
                }
             }
             
