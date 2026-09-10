@@ -48,27 +48,6 @@
   <ItemGroup>
     <None Include="mysql4xb.VersionInfo" />
     <None Include="mysql4xb.xbmac" />
-    <None Include="__mk_package.bat">
-      <Filter>bat</Filter>
-    </None>
-    <None Include="mysql4xb_extract_all.bat">
-      <Filter>bat</Filter>
-    </None>
-    <None Include="postbuild_debug.bat">
-      <Filter>bat</Filter>
-    </None>
-    <None Include="postbuild_release.bat">
-      <Filter>bat</Filter>
-    </None>
-    <None Include="prebuild_debug.bat">
-      <Filter>bat</Filter>
-    </None>
-    <None Include="prebuild_release.bat">
-      <Filter>bat</Filter>
-    </None>
-    <None Include="__mklib.bat">
-      <Filter>bat</Filter>
-    </None>
     <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>

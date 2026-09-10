@@ -1,0 +1,113 @@
+{
+	"versioninfo": "./source/mysql4xb.VersionInfo",
+	"pre.release": {
+		"folders": {
+			"src": "./source",
+			"out": "<src>"
+		},
+		"steps": [
+			"vbuild",
+			"codegen"
+		],
+		"vbuild": {
+			"flags": ""
+		},
+		"codegen": {
+			"cleanup.before": {
+				"files": [
+					"<src>/Release/mysql4xb.obj",
+					"<src>/Debug/mysql4xb.obj",
+					"<src>/mysql4xb.def",
+					"<src>/mysql4xbCpp.def",
+					"<src>/mysql4xb_xbexports.hpp",
+					"<src>/mysql4xb_xbfunclist.hpp"
+				]
+			},
+			"xbmac2h": {
+				"src": "<src>/mysql4xb.xbmac"
+			}
+		}
+	},
+	"pre.debug": {
+		"template": "pre.release"
+	},
+	"post.debug": {
+		"folders": {
+			"src": "./source",
+			"dst": "./Debug"
+		},
+		"steps": [
+			"def2lib20"
+		],
+		"def2lib20": {
+			"in": "<src>/mysql4xb.def",
+			"out": "<dst>/mysql4xb.lib",
+			"monkey": true
+		}
+	},
+	"post.release": {
+		"vars": {
+			"bo": "mysql4xb_<v.maj:03>_<v.min:03>_<v.hbuild:03>_<v.lbuild:03>"
+		},
+		"folders": {
+			"src": "./source",
+			"dst": "./Release",
+			"deploy": "<dst>/builds/_<bo>"
+		},
+		"steps": [
+			"def2lib20",
+			"artefacts"
+		],
+		"def2lib20": {
+			"in": "<src>/mysql4xb.def",
+			"out": "<dst>/mysql4xb.lib",
+			"monkey": true
+		},
+		"artefacts": [
+			{
+				"type": "zip",
+				"zip_filename": "<deploy>/_<bo>.zip",
+				"content": [
+					{
+						"in": [
+							"<dst>/*.lib",
+							"<dst>/mysql4xb.dll",
+							"<dst>/libmysql.dll",
+							"<src>/*.txt"
+						],
+						"out": "/"
+					}
+				]
+			},
+			{
+				"type": "zip",
+				"zip_filename": "<deploy>/_<bo>_source.zip",
+				"content": [
+					{
+						"in": [
+							"./mysql4xb.sln",
+							"./mysql4xb.ot4xb-tool"
+						],
+						"out": "/"
+					},
+					{
+						"in": [
+							"<src>/*.c",
+							"<src>/*.cpp",
+							"<src>/*.h",
+							"<src>/*.hpp",
+							"<src>/*.def",
+							"<src>/*.rc",
+							"<src>/*.txt",
+							"<src>/*.xbmac",
+							"<src>/*.VersionInfo",
+							"<src>/*.vcxproj",
+							"<src>/*.filters"
+						],
+						"out": "/source"
+					}
+				]
+			}
+		]
+	}
+}
