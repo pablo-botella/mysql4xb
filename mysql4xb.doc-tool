@@ -1,0 +1,77 @@
+{
+	"books": [
+		{
+			"name": "reference",
+			"title": "mysql4xb Reference",
+			"prefix": "",
+			"indexes": [
+				{
+					"slug": "index-reference",
+					"title": "mysql4xb Reference",
+					"sections": [
+						{
+							"title": "Articles",
+							"include": [ { "kind": "topic", "category": "*" } ],
+							"by": "name"
+						},
+						{
+							"title": "Classes",
+							"include": [ { "kind": "class", "category": "*" } ],
+							"by": "name"
+						},
+						{
+							"title": "Internals",
+							"include": [ { "kind": "internal-function", "category": "*" } ],
+							"by": "name"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "examples",
+			"title": "mysql4xb Examples",
+			"prefix": "",
+			"indexes": [
+				{
+					"slug": "index-examples",
+					"title": "mysql4xb Examples",
+					"sections": [
+						{
+							"title": "Examples",
+							"include": [ { "kind": "example", "category": "*" } ],
+							"by": "name"
+						}
+					]
+				}
+			]
+		}
+	],
+	"index": {
+		"slug": "index",
+		"title": "mysql4xb",
+		"sections": [ { "books": [ "reference", "examples" ] } ]
+	},
+	"kinds": [
+		{ "name": "class",             "book": "reference", "case_sensitive": false, "case_index": "lower", "tag": "class", "aliases": [ "class-name" ] },
+		{ "name": "internal-function", "book": "reference", "case_sensitive": true,  "tag": "internal" },
+		{ "name": "topic",             "book": null, "book_default": "reference", "case_sensitive": false, "case_index": "lower", "tag": "topic" },
+		{ "name": "note-id",           "book": null, "case_sensitive": false, "case_index": "lower", "tag": "note", "indexed": false },
+		{ "name": "example",           "book": "examples", "case_sensitive": false, "case_index": "lower", "tag": "example" }
+	],
+	"folders": {
+		"src": "./mysql4xb/source",
+		"out": "./mysql4xb/out"
+	},
+	"src": [
+		"<src>/mysql4xb_api.h",
+		"<src>/mysql4xb.cpp",
+		"<src>/mysql4xb_resultset_t.cpp",
+		"<src>/mysql4xb_resultset_rows_t.cpp",
+		"<src>/mysql_xb_resultset_field_t.cpp",
+		"<src>/mysql_xb_quick_query.cpp",
+		"<src>/mysql_xb_functions.cpp",
+		"./examples/*.prg"
+	],
+	"db": "<out>/mysql4xb.db"
+}

@@ -1,5 +1,23 @@
 #include <mysql4xb_api.h>
 // ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/*{{begin-class}}*/
+/*{{class-name_: mysql4xb_result_rows_t
+   | _slug_: mysql4xb_result_rows_t
+   | category: mysql/resultset
+   | desc: The row store of a result: the values of every row already converted to Xbase++, the descriptors of the
+     columns, a name-to-position map, the current position and, per row, the metadata a later save needs. The
+     methods are implemented in C++ over the ot4xb container API and reached by the {{ilink: <class mysql4xb_resultset_t> mysql4xb_resultset_t}} facade; an
+     application normally talks to the facade and comes here for `add_colname_alias()`, for `set_cell()` with its
+     flags by reference, or to read `row_set` directly.
+   | note: `row_set` is an array with one element per row, each `{ aMeta, aValues }`: `aValues` holds one value per column
+     in column order, `aMeta` is `{ cChangedFlags, lNewRow, lDeleted, NIL }` - the flags string has `col_count + 1`
+     characters, `'1'` where a cell was written, the first one for the row as a whole. `blank_row` holds the blank
+     value of every column and is what a new row starts with.
+   | note: The ghost row: a position outside `1..row_count` (0, or `row_count + 1` after skipping past the end) is where
+     `eof()` is true. Reading a cell there returns the blank value of the column and sets the `lGhost` flag of the
+     call; writing does nothing. It is what lets a browse or a form read past the end without checking first.
+   | _kw_: mysql4xb_result_rows_t, rowset, rows, metadata, Class
+   }}*/
 _XPP_REG_FUN_(MYSQL4XB_RESULT_ROWS_T)
 {
 
@@ -7,75 +25,242 @@ _XPP_REG_FUN_(MYSQL4XB_RESULT_ROWS_T)
    if (conco == NULLCONTAINER)
    {
       TXbClass* pc = new TXbClass; pc->ClassName("MYSQL4XB_RESULT_ROWS_T");
+      /*{{|:**BEGIN CLASS  mysql4xb_result_rows_t** }}*/
       pc->EXPORTED();
+      /*{{|ivar_: - VAR row_set
+         | desc_: The rows: `{ { aMeta, aValues }, ... }`, see the note above. Filled by `query()` through `__init_empty_row()`,
+           grown by `add_blank_row()`, shrunk by `remove_row_from_rowset()`.
+         }}*/
       pc->Var("row_set"); // { changedflags,newrecord,to_delete,reserved} , { col , col, ... } }
+      /*{{|ivar_: - VAR fields
+         | desc_: One {{ilink: <class mysql4xb_result_field_t> mysql4xb_result_field_t}} per column, by position.
+         }}*/
       pc->Var("fields");
+      /*{{|ivar_: - VAR field_map
+         | desc_: An [_ot4xb_expando_](https://www.xbwin.com/ot4xb/doc/search?k=_ot4xb_expando_) mapping every column name - and every alias - to its position, so a column can be
+           named in any call. Names are matched the way the expando matches properties: case does not matter.
+         }}*/
       pc->Var("field_map");
+      /*{{|ivar_: - VAR row_pos
+         | desc_: The current row, 1-based; 0 or `row_count + 1` is the ghost row.
+         }}*/
       pc->Var("row_pos");
+      /*{{|ivar_: - VAR blank_row
+         | desc_: The blank value of each column, in column order: what a `NULL` becomes when `null_to_empty` is on, what a new
+           row starts with, what a read on the ghost row returns.
+         }}*/
       pc->Var("blank_row");
+      /*{{|ivar_: - VAR xbase_row_types
+         | desc_: The Xbase++ type letter of each column, what `set_cell()` checks a value against.
+         }}*/
       pc->Var("xbase_row_types");
+      /*{{|ivar_: - VAR row_count
+         | desc_: The number of rows.
+         }}*/
       pc->Var("row_count");
+      /*{{|ivar_: - VAR col_count
+         | desc_: The number of columns.
+         }}*/
       pc->Var("col_count");
+      /*{{|ivar_: - VAR throw_type_error
+         | desc_: `.T.` by default: `set_cell()` refuses a value whose type is not the column's and reports it in `lTypeError`.
+           With `.F.` the value is stored anyway (the examples switch it off while loading a row from an expando).
+         }}*/
       pc->Var("throw_type_error");
+      /*{{|ivar_: - VAR props
+         | desc_: An [_ot4xb_expando_](https://www.xbwin.com/ot4xb/doc/search?k=_ot4xb_expando_) with the properties of the result: `sql`, `mysql`, and whatever the application adds.
+         }}*/
       pc->Var("props");
 
       // -------------------
+      /*{{|method_: - `METHOD truncate()`
+         | return: Self
+         | desc_: Drops every row: `row_set` empty, `row_count` and `row_pos` 0. The columns stay.
+         }}*/
       pc->MethodCB("truncate", "{|s | s:row_set := Array(0) , s:row_pos := 0 , s:row_count := 0 , s}");
       // -------------------
+      /*{{|method_: - `METHOD new( nColumns, nRows )`
+         | return: Self
+         | desc_: Creates the empty store for a result of that size - the arrays, the map, the property bag - with the position
+           at 1 and `throw_type_error` on. `query()` then adds the column descriptors and the rows.
+         }}*/
       pc->Method_cbbs("init", "{|s,col_count , row_count | XbFpCall( %i ,s,col_count , row_count ) }", result_rows_ns::init);
       // -------------------
+      /*{{|method_: - `METHOD add_colname_alias( cColumn, cAlias )`
+         | return: NIL
+         | desc_: Registers a second name for an existing column, so `cAlias` can be used wherever a column name is accepted -
+           including the virtual instance variables of the facade. The alias must not exist yet.
+         }}*/
       pc->Method_cbbs("add_colname_alias", "{|s,col_name , col_alias | XbFpCall( %i ,s,col_name , col_alias)}", result_rows_ns::add_colname_alias);
       // -------------------
+      /*{{|method_: - `METHOD __set_field_definition( oField )`
+         | return: NIL
+         | desc_: Internal, called by `query()` once per column: stores the descriptor in `fields`, its name in `field_map`, its
+           blank value in `blank_row` and its type letter in `xbase_row_types`.
+         }}*/
       pc->Method_cbbs("__set_field_definition", "{|s,fld| XbFpCall(%i , s , fld ) }", result_rows_ns::__set_field_definition);
       // -------------------
+      /*{{|method_: - `METHOD __init_empty_row( nRow, aValues )`
+         | return: NIL
+         | desc_: Internal, called by `query()` once per row: stores the values and a fresh metadata array (nothing changed, not
+           new, not deleted).
+         }}*/
       pc->Method_cbbs("__init_empty_row", "{|s,row_pos,col_array| XbFpCall( %i,s,row_pos,col_array ) }", result_rows_ns::__init_empty_row);
       // -------------------
+      /*{{|method_: - `METHOD add_blank_row( [nFlags] )`
+         | return: NIL
+         | desc_: Appends a row and moves to it, marked as new: filled with the blank values of the columns, or left as NILs when
+           `nFlags` has bit 1.
+         }}*/
       pc->Method_cbbs("add_blank_row", "{|s,flags|  XbFpCall( %i, s , flags ) }", result_rows_ns::add_blank_row);
       // -------------------
+      /*{{|method_: - `METHOD get_col_pos( xColumn )`
+         | return: nColumn
+         | desc_: The position of a column given by name, alias or position; 0 when it does not exist.
+         }}*/
       pc->Method_cbbs("get_col_pos", "{|s,k| XbFpCall(%i,s,k) }", result_rows_ns::get_col_position);
+      /*{{|method_: - `METHOD get_col_name( xColumn )`
+         | return: cName
+         | desc_: The name of a column given by position, name or alias; NIL when it does not exist.
+         }}*/
       pc->Method_cbbs("get_col_name", "{|s,k| XbFpCall(%i,s,k) }", result_rows_ns::get_col_name);
       // -------------------
+      /*{{|method_: - `METHOD get_col_info( [xColumn] )`
+         | return: oField or aFields
+         | desc_: The {{ilink: <class mysql4xb_result_field_t> mysql4xb_result_field_t}} of a column, or the whole `fields` array when the parameter is 0 or omitted.
+         }}*/
       pc->Method_cbbs("get_col_info", "{|s,k| XbFpCall(%i,s,k) }", result_rows_ns::get_col_info);
       // -------------------
+      /*{{|method_: - `METHOD go_top()`
+         | return: NIL
+         | desc_: Row 1, or 0 when there are no rows.
+         }}*/
       pc->Method_cbbs("go_top", "{|s| XbFpCall(%i,s) }", result_rows_ns::go_top);
+      /*{{|method_: - `METHOD go_bottom()`
+         | return: NIL
+         | desc_: The last row.
+         }}*/
       pc->Method_cbbs("go_bottom", "{|s| XbFpCall(%i,s) }", result_rows_ns::go_bottom);
       // -------------------
+      /*{{|method_: - `METHOD skip( [nRows] )`
+         | return: NIL
+         | desc_: Moves `nRows` (default 1); the position stops at 0 going up and at `row_count + 1` going down, the two ghost
+           positions.
+         }}*/
       pc->Method_cbbs("skip", "{|s,n| XbFpCall(%i,s,n) }", result_rows_ns::skip);
       // -------------------
+      /*{{|method_: - `METHOD set_row_pos( nRow )`
+         | return: NIL
+         | desc_: Moves to a row, clamped to the same two ghost positions.
+         }}*/
       pc->Method_cbbs("set_row_pos", "{|s,n| XbFpCall(%i,s,n) }", result_rows_ns::set_row_pos);
       // -------------------
+      /*{{|method_: - `METHOD get_row_pos()`
+         | return: nRow
+         | desc_: The current position.
+         }}*/
       pc->Method_cbbs("get_row_pos", "{|s| s:row_pos }");
+      /*{{|method_: - `METHOD get_row_count()`
+         | return: nRows
+         | desc_: The number of rows.
+         }}*/
       pc->Method_cbbs("get_row_count", "{|s,n| s:row_count }");
       // -------------------
+      /*{{|method_: - `METHOD eof()`
+         | return: lEof
+         | desc_: True on either ghost position.
+         }}*/
       pc->Method_cbbs("eof", "{|s|  s:row_pos > s:row_count .or. s:row_pos < 1 }");
+      /*{{|method_: - `METHOD bof()`
+         | return: lBof
+         | desc_: True at position 0.
+         }}*/
       pc->Method_cbbs("bof", "{|s|  s:row_pos < 1 }");
+      /*{{|method_: - `METHOD get_col_count()`
+         | return: nColumns
+         | desc_: The number of columns.
+         }}*/
       pc->Method_cbbs("get_col_count", "{|s| s:col_count }");
       // -------------------
+      /*{{|method_: - `METHOD escape_cell_value( xColumn, [@lError], [@lGhost] )`
+         | return: cSqlLiteral
+         | desc_: The value of a cell of the current row as the SQL literal for its column, through `escape_value()` of the
+           column's {{ilink: <class mysql4xb_result_field_t> mysql4xb_result_field_t}}. `lError` comes back true for an unknown column, `lGhost` when the position is a ghost row (the
+           blank value is escaped then).
+         }}*/
       pc->Method_cbbs("escape_cell_value", "{|s,n,lError,lGhost|  XbFpCall(%i,s,n,@lError,@lGhost) }", result_rows_ns::escape_cell_value);
       // -------------------
+      /*{{|method_: - `METHOD get_cell( xColumn, [@lError], [@lGhost] )`
+         | return: xValue
+         | desc_: The value of a cell of the current row, by column name, alias or position; the blank value on a ghost row.
+           `lError` true means the column does not exist and NIL was returned.
+         }}*/
       pc->Method_cbbs("get_cell", "{|s,n,lError,lGhost|  XbFpCall(%i,s,n,@lError,@lGhost) }", result_rows_ns::get_cell);
       // -------------------
+      /*{{|method_: - `METHOD set_cell( xColumn, xValue, [@lError], [@lTypeError], [@lChanged], [@lGhost] )`
+         | return: NIL
+         | desc_: Writes a cell of the current row and marks the cell and the row as changed. Nothing is written on a ghost row
+           (`lGhost`), for an unknown column (`lError`), or when the type of the value is not the column's and
+           `throw_type_error` is on (`lTypeError`); a JSON column accepts any type. `lChanged` reports whether the write
+           happened.
+         }}*/
       pc->Method_cbbs("set_cell", "{|s,kn,v,lError,lTypeError,lChanged,lGhost|  XbFpCall(%i,s,kn,v,@lError,@lTypeError,@lChanged,@lGhost) }", result_rows_ns::set_cell);
       // ------------------
+      /*{{|method_: - `METHOD row_metadata( [@lGhost] )`
+         | return: aMeta
+         | desc_: The metadata array of the current row, `{ cChangedFlags, lNewRow, lDeleted, NIL }`, the array itself: what is
+           changed in it changes the row.
+         }}*/
       pc->Method_cbbs("row_metadata", "{|s,lGhost|   XbFpCall(%i,s,@lGhost) }", result_rows_ns::row_metadata);
       // ------------------
+      /*{{|method_: - `METHOD row_changed( [xColumn], [@lError], [@lGhost] )`
+         | return: lChanged
+         | desc_: Whether a column of the current row was written - or any column, with no parameter or 0 - since the row was
+           read or last reset.
+         }}*/
       pc->Method_cbbs("row_changed", "{|s,lGhost|   XbFpCall(%i,s,@lGhost) }", result_rows_ns::row_changed);
       // ------------------
+      /*{{|method_: - `METHOD mark_row_to_delete( [@lGhost] )`
+         | return: NIL
+         | desc_: Sets the deleted mark of the current row.
+         }}*/
       pc->Method_cbbs("mark_row_to_delete", "{|s,lGhost|   XbFpCall(%i,s,@lGhost) }", result_rows_ns::mark_row_to_delete);
       // ------------------
+      /*{{|method_: - `METHOD unmark_row_to_delete( [@lGhost] )`
+         | return: NIL
+         | desc_: Clears it.
+         }}*/
       pc->Method_cbbs("unmark_row_to_delete", "{|s,lGhost|   XbFpCall(%i,s,@lGhost) }", result_rows_ns::unmark_row_to_delete);
       // ------------------
+      /*{{|method_: - `METHOD is_row_marked_to_delete( [@lGhost] )`
+         | return: lDeleted
+         | desc_: Reads it; false on a ghost row.
+         }}*/
       pc->Method_cbbs("is_row_marked_to_delete", "{|s,lGhost|   XbFpCall(%i,s,@lGhost) }", result_rows_ns::is_row_marked_to_delete);
       // ------------------
+      /*{{|method_: - `METHOD is_new_row( [@lGhost] )`
+         | return: lNew
+         | desc_: Whether the current row came from `add_blank_row()`; false on a ghost row.
+         }}*/
       pc->Method_cbbs("is_new_row", "{|s,lGhost|   XbFpCall(%i,s,@lGhost) }", result_rows_ns::is_new_row);
       // ------------------
+      /*{{|method_: - `METHOD remove_row_from_rowset( [@lGhost] )`
+         | return: NIL
+         | desc_: Deletes the current row from `row_set` for good - the way to drop a row once its `DELETE` ran, or to discard a
+           new one - and adjusts the position when it was the last.
+         }}*/
       pc->Method_cbbs("remove_row_from_rowset", "{|s,lGhost|   XbFpCall(%i,s,@lGhost) }", result_rows_ns::remove_row_from_rowset);
       // ------------------
+      /*{{|method_: - `METHOD get_prop( cKey )`
+         | return: xValue
+         | desc_: `get_prop()`, `is_prop( cKey )` and `set_prop( cKey, xValue )` over `props`.
+         }}*/
       pc->MethodCB("get_prop", "{|s,k| s:props:get_prop( k) }");
       pc->MethodCB("is_prop", "{|s,k| s:props:is_prop( k) }");
       pc->MethodCB("set_prop", "{|s,k,v| s:props:set_prop( k,v) }");
 
 
+      /*{{|:**END CLASS** }}*/
       conco = pc->Create();
       delete pc;
       if (conco == NULLCONTAINER)
@@ -88,6 +273,7 @@ _XPP_REG_FUN_(MYSQL4XB_RESULT_ROWS_T)
    _conReturn(pl, conco);
    _conRelease(conco);
 }
+/*{{end-class}}*/
 // ---------------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------------------------------------------------------------

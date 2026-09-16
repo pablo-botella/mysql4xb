@@ -1,5 +1,45 @@
+/*{{topic_: mysql4xb-type-mapping
+   | _slug_: mysql4xb-type-mapping
+   | category: mysql/reference
+   | desc: How `query()` of {{ilink: <class mysql4xb> mysql4xb}} turns what libmysql returns into Xbase++ values. Every cell arrives from the
+     server as text; the column type (`MYSQL_TYPE_*`) decides what it becomes, and the three global flags of the DLL
+     (`mysql4xb_global_flags_*`) bend three of the rules. The same table decides the `xbase_type` letter and the
+     `xbase_empty_value` of the column's {{ilink: <class mysql4xb_result_field_t> mysql4xb_result_field_t}}.
+   |: {{begin-md}}
+     | MySQL type | Xbase++ value | type letter | blank value |
+     |---|---|---|---|
+     | `TINYINT` | logical, `.T.` when not 0; a number when `tiny_to_bool` is off | `L` (`N` when off) | `.F.` (0) |
+     | `DECIMAL`, `NEWDECIMAL` | number with the width and decimals of the column | `N` | 0 |
+     | `SMALLINT`, `INT`, `MEDIUMINT` | number | `N` | 0 |
+     | `BIGINT` | number: an integer when it fits in 32 bits with sign, a double otherwise | `N` | 0 |
+     | `FLOAT`, `DOUBLE` | double | `N` | 0 |
+     | `DATE` | date (the digits of `YYYY-MM-DD`) | `D` | empty date |
+     | `JSON` | the document parsed: an `_ot4xb_expando_` for an object, an array, a scalar | `J` | `""` |
+     | everything else | the text as received | `C` | `""` (spaces to the width for `VAR_STRING`) |
+     {{end-md}}
+   | note: Everything else means `DATETIME`, `TIMESTAMP`, `TIME`, `YEAR`, `CHAR`, `VARCHAR`, `TEXT` and the `BLOB`s,
+     `ENUM`, `SET`, `BIT`, `GEOMETRY`: character strings, byte for byte as the server sent them (a `BLOB` is
+     binary-safe). A `DATETIME` is `"YYYY-MM-DD hh:mm:ss"` as text; the application converts it if it needs a value.
+   | note: `NULL`: the blank value of the column when `null_to_empty` is on (the default), NIL when it is off. A JSON
+     column is decoded with the UTF-8 parser of ot4xb ([ot4xb_json_parse()](https://www.xbwin.com/ot4xb/doc/search?k=ot4xb_json_parse)), so its strings come out converted.
+   | note: Multi-result: with 0x1000 in the `nFlags` of `query()` the call walks `mysql_next_result()` and returns an array
+     with one entry per result - a {{ilink: <class mysql4xb_resultset_t> mysql4xb_resultset_t}} for a result with rows, the affected rows for a statement without -
+     which is how a stored procedure with several `SELECT`s, or several statements in one string with
+     `CLIENT_MULTI_RESULTS`, come back. Without the flag only the first result is returned; the following ones,
+     if any, are dropped by libmysql when the next statement runs.
+   | note: The value types decide what `set_cell()` accepts later: a value must have the type letter of its column, except in
+     a `J` column, which takes anything.
+   | _kw_: type mapping, MYSQL_TYPE, conversion, NULL, JSON, BIGINT, Topic
+   }}*/
 #include <mysql4xb_api.h>
 #include <stdio.h>
+/*{{internal-function_: mysql_field_to_ot4xb_sql_type
+   | syntax_: `LONG mysql_field_to_ot4xb_sql_type( MYSQL_FIELD& field )`
+   | category: mysql/internals
+   | desc: Maps `field.type` (with the `BLOB` flag for the string types) to the `ot4xb_sql_type` enumeration of ot4xb, the value
+     stored in `ot4xb_sql_type` of the field descriptor and used by `escape_value()`.
+   | _kw_: mysql_field_to_ot4xb_sql_type, Internal
+   }}*/
 LONG mysql_field_to_ot4xb_sql_type( MYSQL_FIELD& field )
 {
    switch( field.type )
@@ -40,6 +80,13 @@ LONG mysql_field_to_ot4xb_sql_type( MYSQL_FIELD& field )
 
 }
 // ------------------------------------------------------------------------------------------------------------
+/*{{internal-function_: mysql_xb_quick_query_sqltype_to_xbase_blank_value
+   | syntax_: `ContainerHandle mysql_xb_quick_query_sqltype_to_xbase_blank_value( ContainerHandle con_value, MYSQL_FIELD& field )`
+   | category: mysql/internals
+   | desc: Puts in `con_value` the blank value of a column - the `blank value` column of the table above - honouring
+     `tiny_to_bool`; used for `xbase_empty_value` of the descriptor and for `NULL` cells when `null_to_empty` is on.
+   | _kw_: mysql_xb_quick_query_sqltype_to_xbase_blank_value, Internal
+   }}*/
 ContainerHandle mysql_xb_quick_query_sqltype_to_xbase_blank_value( ContainerHandle con_value, MYSQL_FIELD& field )
 {
    con_value = _conPut( con_value, NULLCONTAINER );
@@ -100,6 +147,12 @@ ContainerHandle mysql_xb_quick_query_sqltype_to_xbase_blank_value( ContainerHand
 
 }
 // ------------------------------------------------------------------------------------------------------------
+/*{{internal-function_: mysql_xb_quick_query_sqltype_to_xbase_type_letter
+   | syntax_: `char mysql_xb_quick_query_sqltype_to_xbase_type_letter( enum_field_types mytype )`
+   | category: mysql/internals
+   | desc: The Xbase++ type letter of a column type: `L`/`N` for `TINYINT` by `tiny_to_bool`, `N`, `D`, `J`, `C`.
+   | _kw_: mysql_xb_quick_query_sqltype_to_xbase_type_letter, Internal
+   }}*/
 char __cdecl mysql_xb_quick_query_sqltype_to_xbase_type_letter( enum_field_types mytype )
 {
    switch( mytype )
@@ -141,6 +194,14 @@ char __cdecl mysql_xb_quick_query_sqltype_to_xbase_type_letter( enum_field_types
    }
 }
 // -------------------------------------------------------------------------------------------------------------
+/*{{internal-function_: mysql_xb_quick_query_create_field_object_container_handle
+   | syntax_: `ContainerHandle mysql_xb_quick_query_create_field_object_container_handle( MYSQL_FIELD& field, DWORD field_pos, ContainerHandle class_object )`
+   | category: mysql/internals
+   | desc: Instantiates the field class (`class_object`, a {{ilink: <class mysql4xb_result_field_t> mysql4xb_result_field_t}} or a class derived from it) and fills its instance
+     variables from the `MYSQL_FIELD`, plus the four derived ones: `ot4xb_sql_type`, `xbase_type`, `xbase_empty_value`,
+     `escape_flags` (`Truncate` when `auto_truncate_values` is on, `NotNull` when the column is).
+   | _kw_: mysql_xb_quick_query_create_field_object_container_handle, Internal
+   }}*/
 ContainerHandle mysql_xb_quick_query_create_field_object_container_handle( MYSQL_FIELD& field, DWORD field_pos, ContainerHandle class_object )
 {
    ContainerHandle con_value = NULLCONTAINER;
@@ -210,6 +271,17 @@ ContainerHandle mysql_xb_quick_query_create_field_object_container_handle( MYSQL
 }
 
 // -------------------------------------------------------------------------------------------------------------
+/*{{internal-function_: mysql_xb_quick_query
+   | syntax_: `void mysql_xb_quick_query( XppParamList pl )`
+   | category: mysql/internals
+   | desc: The C side of `query()`: `( pMysql, cSql, oResultSetClass, oRowsClass, oFieldClass, oSelf, nFlags )`. Runs the
+     statement with `mysql_real_query()` and, for each result of the call, stores it with `mysql_store_result()`, creates
+     the {{ilink: <class mysql4xb_result_rows_t> mysql4xb_result_rows_t}} (`new( nColumns, nRows )`) and the result object (`new( oRows, oSelf, cSql )`), feeds one field
+     descriptor per column through `__set_field_definition()`, converts every cell of every row as the table above says
+     and hands each row to `__init_empty_row()`. A result without rows becomes the affected rows count. With 0x1000 in
+     `nFlags` the results are collected in an array, otherwise the first one is returned.
+   | _kw_: mysql_xb_quick_query, Internal
+   }}*/
 // mysql_xb_quick_query(1pMysql,2sql,3rs_co,4 rows_co , 5 fld_co , 6 self , 7 flags)
 void __cdecl mysql_xb_quick_query( XppParamList pl )
 {
