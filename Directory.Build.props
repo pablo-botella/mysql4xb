@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <!-- Build dependencies. The defaults are the "pli" layout of the author's machines;
+       override any of them with an environment variable, with msbuild /p:NAME=path,
+       or in a git-ignored local.props next to this file. -->
+  <Import Project="$(MSBuildThisFileDirectory)local.props" Condition="Exists('$(MSBuildThisFileDirectory)local.props')" />
+  <PropertyGroup>
+    <MYSQL_CLI_DIR Condition="'$(MYSQL_CLI_DIR)' == ''">C:\pli\mysql-5.7.43-win32</MYSQL_CLI_DIR>
+    <OT4XB_DIR Condition="'$(OT4XB_DIR)' == ''">C:\pli\ot4xb</OT4XB_DIR>
+  </PropertyGroup>
+</Project>
