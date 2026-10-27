@@ -17,6 +17,7 @@
 #pragma comment( lib , "ot4xb_Cpp")
 //----------------------------------------------------------------------------------------------------------------------
 BYTE mysqlxb_global_flags[(DWORD)mysqlxb_global_flags_enum::max_flags] = { 0 };
+char mysqlxb_plugin_dir[MAX_PATH] = { 0 };
 BEGIN_EXTERN_C
 //----------------------------------------------------------------------------------------------------------------------
 static HINSTANCE hMySql4XbInstance = 0;
@@ -65,6 +66,12 @@ XBASE_INIT_PROC()
 {
    mysql_library_init(0, 0, 0);
    mysql_thread_init();
+   // the client plugins (caching_sha2_password.dll, ...) are looked for in the application folder by default
+   if (GetModuleFileNameA(NULL, mysqlxb_plugin_dir, MAX_PATH))
+   {
+      char* p = strrchr(mysqlxb_plugin_dir, '\\');
+      if (p) *p = 0;
+   }
    mysqlxb_global_flags[(DWORD)mysqlxb_global_flags_enum::tiny_to_bool] = 1;
    mysqlxb_global_flags[(DWORD)mysqlxb_global_flags_enum::null_to_empty] = 1;
    mysqlxb_global_flags[(DWORD)mysqlxb_global_flags_enum::auto_truncate_values] = 1;
@@ -102,7 +109,7 @@ END_EXTERN_C
    | note: The class is built from C++ with `TXbClass` when the DLL loads; every method is a code block that calls into
      the C side with `XbFpCall()`. Deriving from it works as with any Xbase++ class - the examples do it - with one
      rule: the derived class needs an `initclass` class method, even an empty one.
-   | note: libmysql is initialised once per process and once per thread (`mysql_thread_init()` from `DllMain`). Each
+   | note: The client library is initialised once per process and once per thread (`mysql_thread_init()` from `DllMain`). Each
      thread creates its own `mysql4xb` object; a connection is never shared between threads.
    | see-also: {{ilink: <class mysql4xb_resultset_t> mysql4xb_resultset_t}} - what `query()` returns, and the recordset API over it.
    | see-also: {{ilink: <topic mysql4xb-overview> overview}} - the four classes and how they fit together.
@@ -377,8 +384,9 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
            - `METHOD set_option_max_allowed_packet( nValue )` - `MYSQL_OPT_MAX_ALLOWED_PACKET`
            - `METHOD set_option_net_buffer_length( nValue )` - `MYSQL_OPT_NET_BUFFER_LENGTH`
            - `METHOD set_option_tls_version( cValue )` - `MYSQL_OPT_TLS_VERSION`
-           - `METHOD set_option_ssl_mode( nValue )` - `MYSQL_OPT_SSL_MODE`
-           - `METHOD set_option_get_server_public_key( lValue )` - `MYSQL_OPT_GET_SERVER_PUBLIC_KEY`
+           - `METHOD set_option_ssl_mode( nValue )` - the `SSL_MODE_*` of libmysql 5.7 (1 `DISABLED` .. 5 `VERIFY_IDENTITY`),
+             mapped onto `MYSQL_OPT_SSL_ENFORCE` and `MYSQL_OPT_SSL_VERIFY_SERVER_CERT`, which is what MariaDB
+             Connector/C has; see {{ilink: <internal-function mysql_xb_set_option_ssl_mode> mysql_xb_set_option_ssl_mode}}.
          }}*/
       pc->Method_cbbs("set_option_connect_timeout", "{|s,v| XbFpCall(%i,s:m_mysql,%i,v)}", mysql_xb_set_option_dword, MYSQL_OPT_CONNECT_TIMEOUT);
       pc->Method_cbbs("set_option_init_command", "{|s,v| XbFpCall(%i,s:m_mysql,%i,v)}", mysql_xb_set_option_string, MYSQL_INIT_COMMAND);
@@ -414,8 +422,7 @@ XPPRET XPPENTRY MYSQL4XB(XppParamList pl)
       pc->Method_cbbs("set_option_max_allowed_packet", "{|s,v| XbFpCall(%i,s:m_mysql,%i,v)}", mysql_xb_set_option_dword, MYSQL_OPT_MAX_ALLOWED_PACKET);
       pc->Method_cbbs("set_option_net_buffer_length", "{|s,v| XbFpCall(%i,s:m_mysql,%i,v)}", mysql_xb_set_option_dword, MYSQL_OPT_NET_BUFFER_LENGTH);
       pc->Method_cbbs("set_option_tls_version", "{|s,v| XbFpCall(%i,s:m_mysql,%i,v)}", mysql_xb_set_option_string, MYSQL_OPT_TLS_VERSION);
-      pc->Method_cbbs("set_option_ssl_mode", "{|s,v| XbFpCall(%i,s:m_mysql,%i,v)}", mysql_xb_set_option_dword, MYSQL_OPT_SSL_MODE);
-      pc->Method_cbbs("set_option_get_server_public_key", "{|s,v| XbFpCall(%i,s:m_mysql,%i,v)}", mysql_xb_set_option_bool, MYSQL_OPT_GET_SERVER_PUBLIC_KEY);
+      pc->Method_cbbs("set_option_ssl_mode", "{|s,v| XbFpCall(%i,s:m_mysql,v)}", mysql_xb_set_option_ssl_mode);
       // -----
       /*{{|method_: - `METHOD connect( cHost, cUser, cPassword, cDb, nPort, cUnixSocket, nFlags )`
          | return: lConnected

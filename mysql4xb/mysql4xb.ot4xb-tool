@@ -72,7 +72,8 @@
 						"in": [
 							"<dst>/*.lib",
 							"<dst>/mysql4xb.dll",
-							"<dst>/libmysql.dll",
+							"<dst>/libmariadb.dll",
+							"<dst>/caching_sha2_password.dll",
 							"<src>/*.txt"
 						],
 						"out": "/"

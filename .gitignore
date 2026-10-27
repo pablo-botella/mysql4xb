@@ -24,3 +24,5 @@ v15
 /mysql4xb/source/Debug/
 /mysql4xb/source/Release/
 local.props
+/.doc
+/mariadb

@@ -57,7 +57,7 @@
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(MYSQL_CLI_DIR)\include;$(OT4XB_DIR)\cppinc;$(ProjectDir)..\xpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(MARIADB_CLI_DIR)\include;$(OT4XB_DIR)\cppinc;$(ProjectDir)..\xpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeaderOutputFile />
@@ -69,10 +69,10 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <Version>1.0</Version>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\xpp;$(MYSQL_CLI_DIR)\lib;$(OT4XB_DIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\xpp;$(MARIADB_CLI_DIR)\lib;$(OT4XB_DIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>mysql4xbCpp.def</ModuleDefinitionFile>
       <ImportLibrary>$(TargetDir)$(TargetName)_cpp.lib</ImportLibrary>
-      <AdditionalDependencies>libmysql.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libmariadb.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PreBuildEvent>
@@ -95,7 +95,7 @@
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(MYSQL_CLI_DIR)\include;$(OT4XB_DIR)\cppinc;$(ProjectDir)..\xpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(MARIADB_CLI_DIR)\include;$(OT4XB_DIR)\cppinc;$(ProjectDir)..\xpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <StringPooling>true</StringPooling>
       <MinimalRebuild />
@@ -110,10 +110,10 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <Version>1.0</Version>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\xpp;$(MYSQL_CLI_DIR)\lib;$(OT4XB_DIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\xpp;$(MARIADB_CLI_DIR)\lib;$(OT4XB_DIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>mysql4xbCpp.def</ModuleDefinitionFile>
       <ImportLibrary>$(TargetDir)$(TargetName)_cpp.lib</ImportLibrary>
-      <AdditionalDependencies>libmysql.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libmariadb.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PreBuildEvent>

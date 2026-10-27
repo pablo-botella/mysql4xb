@@ -1,7 +1,7 @@
 /*{{topic_: mysql4xb-overview
    | _slug_: mysql4xb-overview
    | category: mysql/reference
-   | desc: mysql4xb is a wrapper over `libmysql.dll`, the client library of MySQL, for Xbase++ programs, built on
+   | desc: mysql4xb is a wrapper over `libmariadb.dll`, MariaDB Connector/C, the client library of MySQL and MariaDB, for Xbase++ programs, built on
      [ot4xb](https://www.xbwin.com/ot4xb/doc/). It is one DLL, `mysql4xb.dll`, that registers four Xbase++ classes
      when it loads and needs nothing else from the program: no `.ch`, no `.lib` beyond the import library, the
      connection, the query and the rows are objects.
@@ -35,7 +35,7 @@
      filters, saves and dumps to expandos.
    |: ## Building the DLL
      Visual Studio, the solution `mysql4xb.sln`; `Directory.Build.props` takes the two dependencies, the MySQL client
-     (`MYSQL_CLI_DIR`, headers and `libmysql.lib`) and ot4xb (`OT4XB_DIR`), from environment variables, `msbuild`
+     (`MARIADB_CLI_DIR`, headers and `libmariadb.lib` of MariaDB Connector/C) and ot4xb (`OT4XB_DIR`), from environment variables, `msbuild`
      properties or a git-ignored `local.props`. The Xbase++ exports are declared in `mysql4xb.xbmac` and generated into
      the `.def` and `.hpp` files by ot4xb-tool before the build (`mysql4xb.ot4xb-tool`), which also produces the
      `.lib` for Xbase++ and the release zips afterwards. `mysql4xb_version.h` carries the version the `version` class
@@ -65,6 +65,20 @@
 #include <mysql.h>
 #pragma warning( pop)
 
+// CLIENT_* flags of libmysql 5.7 that the MariaDB Connector/C headers name differently or lack; same bits
+#ifndef CLIENT_LONG_PASSWORD
+#define CLIENT_LONG_PASSWORD   1              // CLIENT_MYSQL in MariaDB
+#endif
+#ifndef CLIENT_RESERVED2
+#define CLIENT_RESERVED2       32768          // CLIENT_SECURE_CONNECTION in MariaDB
+#endif
+#ifndef CLIENT_SESSION_TRACK
+#define CLIENT_SESSION_TRACK   (1UL << 23)    // CLIENT_SESSION_TRACKING in MariaDB
+#endif
+#ifndef CLIENT_DEPRECATE_EOF
+#define CLIENT_DEPRECATE_EOF   (1UL << 24)    // not implemented by MariaDB Connector/C
+#endif
+
 enum class mysqlxb_global_flags_enum : DWORD
 {
    tiny_to_bool,
@@ -76,11 +90,13 @@ enum class mysqlxb_global_flags_enum : DWORD
 
 
 extern BYTE mysqlxb_global_flags[(DWORD)mysqlxb_global_flags_enum::max_flags];
+extern char mysqlxb_plugin_dir[MAX_PATH]; // default MYSQL_PLUGIN_DIR: the application folder
 
 // mysql_xb_functions.cpp
 void __cdecl mysql_xb_set_option_dword(XppParamList pl);
 void __cdecl mysql_xb_set_option_bool(XppParamList pl);
 void __cdecl mysql_xb_set_option_string(XppParamList pl);
+void __cdecl mysql_xb_set_option_ssl_mode(XppParamList pl);
 // --------
 void __cdecl mysql_xb_real_connect(XppParamList pl);
 

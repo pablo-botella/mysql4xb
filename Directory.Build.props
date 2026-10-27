@@ -5,7 +5,7 @@
        or in a git-ignored local.props next to this file. -->
   <Import Project="$(MSBuildThisFileDirectory)local.props" Condition="Exists('$(MSBuildThisFileDirectory)local.props')" />
   <PropertyGroup>
-    <MYSQL_CLI_DIR Condition="'$(MYSQL_CLI_DIR)' == ''">C:\pli\mysql-5.7.43-win32</MYSQL_CLI_DIR>
+    <MARIADB_CLI_DIR Condition="'$(MARIADB_CLI_DIR)' == ''">$(MSBuildThisFileDirectory)mariadb</MARIADB_CLI_DIR>
     <OT4XB_DIR Condition="'$(OT4XB_DIR)' == ''">C:\pli\ot4xb</OT4XB_DIR>
   </PropertyGroup>
 </Project>

@@ -56,6 +56,54 @@ void __cdecl mysql_xb_set_option_string(XppParamList pl) // ( MYSQL* pMysql , nO
    }
 }
 // ------------------------------------------------------------------------------------------------------------
+/*{{internal-function_: mysql_xb_set_option_ssl_mode
+   | syntax_: `void mysql_xb_set_option_ssl_mode( XppParamList pl )` - `( pMysql, nMode )`
+   | category: mysql/internals
+   | desc: The C side of `set_option_ssl_mode()`. MariaDB Connector/C has no `MYSQL_OPT_SSL_MODE`, so the `SSL_MODE_*`
+     values of libmysql 5.7 are mapped onto the options it does have: `DISABLED` (1) and `PREFERRED` (2) clear
+     `MYSQL_OPT_SSL_ENFORCE`; `REQUIRED` (3) and `VERIFY_CA` (4) set it (the CA comes from `set_option_ssl_ca()`);
+     `VERIFY_IDENTITY` (5) sets it and `MYSQL_OPT_SSL_VERIFY_SERVER_CERT` too. Any other value is ignored.
+     Reached from the methods of {{ilink: <class mysql4xb> mysql4xb}} through `XbFpCall()`.
+   | _kw_: mysql_xb_set_option_ssl_mode, Internal
+   }}*/
+enum mysql4xb_ssl_mode // the enum mysql_ssl_mode of libmysql 5.7, absent from the MariaDB headers
+{
+   MYSQL4XB_SSL_MODE_DISABLED = 1,
+   MYSQL4XB_SSL_MODE_PREFERRED,
+   MYSQL4XB_SSL_MODE_REQUIRED,
+   MYSQL4XB_SSL_MODE_VERIFY_CA,
+   MYSQL4XB_SSL_MODE_VERIFY_IDENTITY
+};
+void __cdecl mysql_xb_set_option_ssl_mode(XppParamList pl) // ( MYSQL* pMysql , nMode ) -> NIL
+{
+   TXppParamList xpp(pl, 2);
+   MYSQL* my = (MYSQL*)xpp[1]->GetDWord();
+   if (my)
+   {
+      int enforce = 0;
+      int verify  = 0;
+
+      switch (xpp[2]->GetLong())
+      {
+         case MYSQL4XB_SSL_MODE_DISABLED:
+         case MYSQL4XB_SSL_MODE_PREFERRED:
+            break;
+         case MYSQL4XB_SSL_MODE_REQUIRED:
+         case MYSQL4XB_SSL_MODE_VERIFY_CA:
+            enforce = 1;
+            break;
+         case MYSQL4XB_SSL_MODE_VERIFY_IDENTITY:
+            enforce = 1;
+            verify  = 1;
+            break;
+         default:
+            return;
+      }
+      mysql_options(my, MYSQL_OPT_SSL_ENFORCE, (void*)&enforce);
+      mysql_options(my, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, (void*)&verify);
+   }
+}
+// ------------------------------------------------------------------------------------------------------------
 /*{{internal-function_: mysql_xb_real_connect
    | syntax_: `void mysql_xb_real_connect( XppParamList pl )` - `( pMysql, cHost, cUser, cPassword, cDb, nPort, cUnixSocket, nFlags ) -> lOk`
    | category: mysql/internals
@@ -87,7 +135,9 @@ void __cdecl mysql_xb_real_connect(XppParamList pl) // mysql_xb_real_connect(1MY
 /*{{internal-function_: mysql_xb_init
    | syntax_: `void mysql_xb_init( XppParamList pl )` - `( oSelf, [nFlags] ) -> oSelf`
    | category: mysql/internals
-   | desc: `mysql_init()`: creates the handle stored in `m_mysql`, closing a previous one, and stores `nFlags` (default 1) in
+   | desc: `mysql_init()`: creates the handle stored in `m_mysql`, closing a previous one, sets `MYSQL_PLUGIN_DIR` to the
+     application folder (where `caching_sha2_password.dll` and the other client plugins are expected; `set_option_plugin_dir()`
+     overrides it), and stores `nFlags` (default 1) in
      `m_mysql4xb_flags`. The C side of `new()`.
      Reached from the methods of {{ilink: <class mysql4xb> mysql4xb}} through `XbFpCall()`.
    | _kw_: mysql_xb_init, Internal
@@ -104,6 +154,10 @@ void __cdecl mysql_xb_init(XppParamList pl)
       mysql_close(my);
    }
    my = mysql_init((MYSQL*) 0 );
+   if (my && mysqlxb_plugin_dir[0])
+   {
+      mysql_options(my, MYSQL_PLUGIN_DIR, (void*)mysqlxb_plugin_dir);
+   }
    _conSetNLMember(Self, "m_mysql", (LONG)((void*)my));
    xpp[0]->Put(Self);
 }

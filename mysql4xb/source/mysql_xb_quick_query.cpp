@@ -75,6 +75,7 @@ LONG mysql_field_to_ot4xb_sql_type( MYSQL_FIELD& field )
       case MYSQL_TYPE_VAR_STRING:  return  IS_BLOB( field.flags ) ? (LONG) ot4xb_sql_type::VarBinary : (LONG) ot4xb_sql_type::VarChar;
       case MYSQL_TYPE_STRING:  return  IS_BLOB( field.flags ) ? (LONG) ot4xb_sql_type::Blob : (LONG) ot4xb_sql_type::Char;
       case MYSQL_TYPE_GEOMETRY:  return  (LONG) ot4xb_sql_type::Char;
+      case MYSQL_TYPE_VECTOR: case MAX_NO_FIELD_TYPES:
       default:  return (LONG) ot4xb_sql_type::Char;
    }
 
@@ -139,6 +140,7 @@ ContainerHandle mysql_xb_quick_query_sqltype_to_xbase_blank_value( ContainerHand
       case MYSQL_TYPE_VARCHAR: case MYSQL_TYPE_BIT: case MYSQL_TYPE_JSON: case MYSQL_TYPE_ENUM: case MYSQL_TYPE_SET:
       case MYSQL_TYPE_TINY_BLOB: case MYSQL_TYPE_MEDIUM_BLOB: case MYSQL_TYPE_LONG_BLOB: case MYSQL_TYPE_BLOB:
       case MYSQL_TYPE_STRING: case MYSQL_TYPE_GEOMETRY:
+      case MYSQL_TYPE_VECTOR: case MAX_NO_FIELD_TYPES:
       default: // character as is
       {
          return _conPutC( con_value, "" );
@@ -187,6 +189,7 @@ char __cdecl mysql_xb_quick_query_sqltype_to_xbase_type_letter( enum_field_types
       case MYSQL_TYPE_VARCHAR: case MYSQL_TYPE_BIT:  case MYSQL_TYPE_ENUM: case MYSQL_TYPE_SET:
       case MYSQL_TYPE_TINY_BLOB: case MYSQL_TYPE_MEDIUM_BLOB: case MYSQL_TYPE_LONG_BLOB: case MYSQL_TYPE_BLOB: case MYSQL_TYPE_VAR_STRING:
       case MYSQL_TYPE_STRING: case MYSQL_TYPE_GEOMETRY:
+      case MYSQL_TYPE_VECTOR: case MAX_NO_FIELD_TYPES:
       default: // character as is
       {
          return 'C';
@@ -499,6 +502,7 @@ void __cdecl mysql_xb_quick_query( XppParamList pl )
                                  case MYSQL_TYPE_STRING:
                                  case MYSQL_TYPE_GEOMETRY:
 
+                                 case MYSQL_TYPE_VECTOR: case MAX_NO_FIELD_TYPES:
                                  default: // character as is
                                  {
                                     con_value = _conPutCL( con_value, row[ field_pos ], row_lengths[ field_pos ] );
